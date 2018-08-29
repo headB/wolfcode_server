@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def wechat():
-    token = 'wolfcode'
+    token = 'weiphp'
 
     #获取参数
     data = request.args
