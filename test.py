@@ -2,6 +2,11 @@ from flask import Flask,request,make_response
 import hashlib
 import time
 import xmltodict
+import requests
+
+##调用全局对象,保存对象
+from flask import g
+#但是也可以考虑redis数据库保存数据
 
 
 #第一步设置flask实例
@@ -9,6 +14,10 @@ import xmltodict
 app = Flask(__name__)
 
 #添加路由
+
+@app.route("/test")
+def index():
+    return "welcome"
 
 @app.route("/",methods=["GET","POST"])
 def wechat():
@@ -52,7 +61,8 @@ def wechat():
                 'Content':req.get('Content')
             }
             xml = xmltodict.unparse({'xml': resp})
-            print(req.get('Content'))
+            
+            print(xml)
             return xml
         else:
             resp = {
@@ -60,11 +70,44 @@ def wechat():
                 'FromUserName': req.get('ToUserName', ''),
                 'CreateTime': int(time.time()),
                 'MsgType': 'text',
-                'Content': 'I LOVE ITCAST'
+                'Content': 'I LOVE ITCAST,https://520su.cn'
             }
             xml = xmltodict.unparse({'xml':resp})
+            
             return xml
-        
+
+@app.route("/.well-known/pki-validation/fileauth.txt")
+def static_1():
+    return "201808300150424hp5fbf0mb90bfjb84lbbbmgh1k9shz988f2sfa7ljdx4kx0r5"
+
+#获取token
+@app.route("/get_token")
+def get_token():
+    res = requests.get(url="https://api.weixin.qq.com/sns/oauth2/access_token?appid=wx72e3704260c67375&secret=a746f4c11170781b89378b657537f55b&code=081bG7Sb120gcu0JIhTb1dujSb1bG7Su&state&grant_type=authorization_code")
+
+    content = res.content.decode()
+    print(content)
+    return "OK",200
+
+#获取用户信息
+@app.route("/get_user_info")
+def get_user_info():
+    
+    res = requests.get(url="https://api.weixin.qq.com/sns/userinfo?access_token=13_3KS_bd4SBlDtRwqANxnNQ9acOtvQL3GwPYMUQQsiaWQH0904lN3yF_9-0Y8q28KVCeP6KnpLgmsRP5xEYXEHl5nvWwwyTtlqT0nXQ54FLq4&openid=oDet_1s8FnM_52XTGnikyeSiD0Nk&lang=zh_CN")
+
+    print(res.content.decode())
+
+    return 'xx'
+
+#重新刷新token的数值
+@app.route("/refresh_token")
+def refresh_token():
+
+    res = requests.get(url="https://api.weixin.qq.com/sns/oauth2/refresh_token?appid=wx72e3704260c67375&grant_type=refresh_token&refresh_token=13_5KcYd9PXfMc2c5HorDLbLo9ewJb5APGB0wmROWPVoOWpo2Dw4GusYNmr4XUyrSPr2Uo_wvoQZw8aOHD8fIUFlzVY6zvMBx0huMQVcWAkP7s")
+
+    print(res.content.decode())
+
+    return 'xxx'
 
 if __name__ == "__main__":
 
