@@ -25,8 +25,8 @@ chan = ssh.invoke_shell()
 def multi_cmd(ssh_object,cmds):
     for x in cmds:
         ssh_object.send(x)
-        time.sleep(1)
-        res = ssh_object.recv(999)
+        time.sleep(0.5)
+        res = ssh_object.recv(99999)
         print(res)
         
     # ssh_object.close()
@@ -42,6 +42,10 @@ def multi_cmd(ssh_object,cmds):
 cmds = ['sys\n','dis acl 3307\n']
 
 multi_cmd(chan,cmds)
+
+chan.send("dis acl all\n               ")
+time.sleep(3)
+print(chan.recv(99999))
 
 
 print(datetime.datetime.now())
