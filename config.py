@@ -21,3 +21,9 @@ def decode_state_code(code):
         return True
     else:
         return False
+
+class switcher_ssh_config:
+
+    hostname = '192.168.113.254'
+    username = ''
+    password = ''
