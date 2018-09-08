@@ -1,1 +1,1 @@
-from . import network_service
+# from . import network_service

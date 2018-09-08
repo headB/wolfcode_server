@@ -1,16 +1,15 @@
 from flask import Flask
-<<<<<<< HEAD
 from flask_bootstrap import Bootstrap
 
-=======
-from network_service.v_1_0 import network_api,register_api,postman_api
->>>>>>> c0d6a09ce9942fe6360b1afc81dec3ebd1e30ce9
 
 app = Flask(__name__)
 bootstrap = Bootstrap(app)
 app.register_blueprint
 
-app.register_blueprint(network_api,url_prefix="/network")
+#导入蓝图
+from network_service.v_1_0 import register_api
+
+app.register_blueprint(register_api,url_prefix="/")
 
 if __name__ == "__main__":
 

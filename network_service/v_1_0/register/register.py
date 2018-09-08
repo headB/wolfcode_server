@@ -19,3 +19,19 @@
 
 #然后评分系统唯一需要改的地方就是,在登录验证的时候,去除验证码!
 
+from flask import render_template
+
+from . import register_api
+
+@register_api.route("/index")
+def index():
+
+    #调用首页显示
+    return render_template('index.html')
+
+@register_api.route("/")
+def index2():
+
+    #调用首页显示
+    return render_template('index.html')
+
