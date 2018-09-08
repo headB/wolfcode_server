@@ -11,9 +11,7 @@ username = ''
 password = ''
 
 
-hostname = '192.168.113.254'
-username = 'admin'
-password = 'kumanxuan@gzit'
+
 
 #把主机添加到konwn_host
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
