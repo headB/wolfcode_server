@@ -1,5 +1,30 @@
 {% extends 'base.html' %}
 
+{% block styles %}
+
+{{ super() }}
+<style>
+    html,body {
+        height:100%
+    }
+
+    h2 { margin:0 }
+
+    .content  {
+        height:100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    </style>
+
+{% endblock %}
+
 {% block body %}
-<center><h2>我才是正文</h2></center>
+<div class="content" >
+<h2>我才是正文</h2>
+
+</div>
+
 {% endblock %}

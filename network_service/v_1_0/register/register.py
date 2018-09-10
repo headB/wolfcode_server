@@ -19,19 +19,62 @@
 
 #然后评分系统唯一需要改的地方就是,在登录验证的时候,去除验证码!
 
-from flask import render_template
-
+from flask import render_template,request
+import datetime
+import time
 from . import register_api
 
-@register_api.route("/index")
+import xmltodict
+
+@register_api.route("/",methods=["GET","POST"])
 def index():
-
     #调用首页显示
-    return render_template('index.html')
+    #但是根据实际的请求来操作
+    #例如消息都是post的方式
+    #然后普通pc访问都是get方式
+    
+    if request.method == "POST":
+        
+        #接收一些参数
+        #1.ToUserName
+        #2.FromUserName
+        #3.Create
+        #4.MsgType
+        #5.Content
+        #6.MsgId
 
-@register_api.route("/")
+        content_xml = request.data
+        content = xmltodict.parse(content_xml)['xml']
+
+        return_content = {}
+        
+        # timestamp = time.mktime(datetime.datetime.now().timetuple())
+        timestamp = time.time()
+        ##捕捉一些野生openid
+        try:
+            return_content['ToUserName'] = content['FromUserName']
+            return_content['Content'] = "请输入你想输入的内容,<a href='https://kumanxuan1.f3322.net'>点我点我</a>"
+            return_content['FromUserName'] = content['ToUserName']
+            return_content['CreateTime'] = int(timestamp)
+            return_content['MsgType'] = 'text'
+        except Exception as e:
+            return "处理参数出错"
+
+        #现在问题就是，如何接收一坨的xml标签的内容呢？
+        print(request.data)
+        
+        x1 = xmltodict.unparse({'xml':return_content})
+        
+        return x1
+
+
+    else:
+        
+        return render_template('index.html')
+
+@register_api.route("/index")
 def index2():
-
+    print("xxyQQ")
     #调用首页显示
     return render_template('index.html')
 

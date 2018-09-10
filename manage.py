@@ -1,6 +1,9 @@
 from flask import Flask
 from flask_bootstrap import Bootstrap
 
+from flask_script import Manager
+#还是需要导入那个什么脚本助手了,导入Manager
+
 
 app = Flask(__name__)
 bootstrap = Bootstrap(app)
@@ -11,9 +14,13 @@ from network_service.v_1_0 import register_api
 
 app.register_blueprint(register_api,url_prefix="/")
 
-if __name__ == "__main__":
+#使用外部工具
+manager = Manager(app)
 
-    app.run(debug=True)
+if __name__ == "__main__":
+    
+    #app.run('0.0.0.0', debug=True,port=8080,ssl_context=('cert.pem', 'key.pem')) 
+    manager.run()
 
 
 #想想具体的流程

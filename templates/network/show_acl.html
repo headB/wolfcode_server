@@ -1,0 +1,39 @@
+{% extends "bootstrap/base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+<!-- <script src="jq.js"></script> -->
+
+{% block styles %}
+{{ super()}}
+<script src="{{bootstrap_find_resource('jquery.js', cdn='jquery')}}"></script>
+{% endblock styles %}
+
+{% block content %}
+
+<div>
+<div style="text-align: center" ><h2>下面是全部的课室的网络状态</h2>
+    <div class="well" >
+
+        <table class="table table-responsive table-striped table-hover table-bordered"  cellspacing="0" cellpadding="0" border="1">
+
+            <tbody>
+                <tr>
+                <!-- <tr>序号</tr> -->
+                <td>位置</td>
+                <td>网络状态</td>
+                <td>操作网络</td>
+                <td>是否设置定时上网</td>
+                <td>具体操作</td>
+            </tr>
+
+            
+
+            </tbody>
+
+        </table>
+
+    </div>
+</div>
+</div>
+
+{% endblock content %}
+
