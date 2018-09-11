@@ -25,6 +25,38 @@ import time
 from . import register_api
 import re
 import xmltodict
+import datetime
+from config import Config
+import hashlib
+from manage import mail
+from flask_mail import Message
+
+
+#验证码,现在要出动itsdangous了
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+
+
+#设置一个消息封装
+
+def decode_msg(xml_object):
+
+    content = xmltodict.parse(xml_object)['xml']
+    timestamp = time.time()
+    return_content = {}
+    try:
+        return_content['ToUserName'] = content['FromUserName']
+        return_content['FromUserName'] = content['ToUserName']
+        return_content['CreateTime'] = int(timestamp)
+        return_content['MsgType'] = 'text'
+        return_content['Content'] = content['Content']
+    except Exception as e:
+        return False
+
+    return return_content
+
+
+
+
 
 @register_api.route("/",methods=["GET","POST"])
 def index():
@@ -44,23 +76,13 @@ def index():
         #6.MsgId
 
         content_xml = request.data
-        content = xmltodict.parse(content_xml)['xml']
-
-        return_content = {}
-        
+    
         # timestamp = time.mktime(datetime.datetime.now().timetuple())
         timestamp = time.time()
         ##捕捉一些野生openid
-        try:
-            return_content['ToUserName'] = content['FromUserName']
-            #return_content['Content'] = "请输入你想输入的内容,<a href='https://kumanxuan1.f3322.net/estimate'>点我点我</a>"
-            return_content['FromUserName'] = content['ToUserName']
-            return_content['CreateTime'] = int(timestamp)
-            return_content['MsgType'] = 'text'
-            req_con = content['Content']
-        except Exception as e:
-            return "处理参数出错"
-
+        return_content = decode_msg(content_xml)
+        req_con = return_content['Content']
+        
         #现在问题就是，如何接收一坨的xml标签的内容呢？
 
         #根据请求，返回不同的响应
@@ -89,6 +111,26 @@ def index():
             
             return_content['Content'] = "关于如何用语句控制网络的提示↓↓↓↓\n\n开启课室网络的语句格式:\n课室1开网\n\n关闭课室网络的语句格式:\n课室15断网"
             return_content['Content'] += "\n\n\n备注：目前仅支持广州远程操作，上海和北京暂时只能使用<评价系统>里面的<网络管理>来控制网络"
+        
+        
+        elif re.findall("邮箱|绑定",req_con):
+
+            return_content['Content'] = "邮箱绑定的格式:\n\nemail#xxxxx@wolfcode.cn\n\n或者是:\n\nemail#xxx@520it.com"
+
+        elif re.findall("(?<=email#)([a-z]+[0-9]*@(wolfcode\.cn|520it\.com))",req_con):
+            x1 = re.findall("(?<=email#)([a-z]+[0-9]*@(wolfcode\.cn|520it\.com))",req_con)
+            #print(x1[0][0])
+
+            #邮箱正确,然后就马上发送邮件,根据两端相同的密钥
+
+            print(return_content['ToUserName'])
+
+            if send_verify_code(return_content['ToUserName']):
+
+                return_content['Content'] = "邮箱格式正确!发送成功!请检查你邮箱信件"
+            else:
+                return_content['Content'] = "发送失败"
+        
         else:
 
             return_content['Content'] = "操作无效，目前支持的关键字是：教室|课室|网络|断网|开网|关闭|打开|评分系统"
@@ -107,4 +149,43 @@ def index2():
     
     #调用首页显示
     return render_template('index.html')
+
+@register_api.route("/weixin_checkin")
+def weixin_checkin():
+
+
+    time1 = datetime.datetime.now().strftime("%Y-%M+%d=%H:%M:00")
+    time1 += Config.SECRET_KEY
+    time1 = hashlib.md5(time1.encode()).hexdigest()
+    
+
+
+    return "xxoo"
+
+
+
+
+def send_verify_code(weixin_opnid):
+
+    #尝试获取open_id
+    
+    #初始化一个对象先
+    serializer = Serializer(Config.SECRET_KEY,300)
+
+    #把微信的id,添加到加密的token当中.
+
+    token_info = serializer.dumps({'weixin_openid':weixin_opnid})
+
+    print(weixin_opnid)
+    print(token_info.decode())
+
+    msg = Message("你好",sender="lizhixuan@wolfcode.cn",recipients=['lizhixuan@wolfcode.cn',])
+
+    msg.body = "hello world!"
+
+    msg.html("你好,你的微信id是:%s,你的token%s"%(weixin_opnid,token_info.decode()))
+
+    mail.send(msg)
+
+    return True
 

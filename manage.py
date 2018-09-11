@@ -1,13 +1,16 @@
 from flask import Flask
 from flask_bootstrap import Bootstrap
-
+from flask_mail import Mail
 from flask_script import Manager
+import config
 #还是需要导入那个什么脚本助手了,导入Manager
 
 
 app = Flask(__name__)
 bootstrap = Bootstrap(app)
 app.register_blueprint
+app.config.from_object(config.Config)
+mail = Mail(app)
 
 #导入蓝图
 from network_service.v_1_0 import register_api
