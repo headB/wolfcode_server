@@ -30,6 +30,7 @@ from config import Config
 import hashlib
 from manage import mail
 from flask_mail import Message
+from network_service.v_1_0.register.models import User
 
 
 #验证码,现在要出动itsdangous了
@@ -103,7 +104,7 @@ def index():
         #然后到了最后就输出所有提示，当前暂时就是涉及到关键字，课室，教室，网络，开网，断网
 
         if re.findall("(评分系统|评分|评价|系统)",req_con):
-            return_content['Content'] = "暂时还没有支持一键免账号密码登陆，但是支持手动登陆，可以点击这里登陆\n\n<a href='https://kumanxuan1.f3322.net/estimate'>点我点我</a>"
+            return_content['Content'] = "暂时还没有支持一键免账号密码登陆，但是支持手动登陆，可以点击这里登陆\n\n<a href='https://weixin.520langma.com/estimate'>点我点我</a>"
 
         
 
@@ -115,7 +116,7 @@ def index():
         
         elif re.findall("邮箱|绑定",req_con):
 
-            return_content['Content'] = "邮箱绑定的格式:\n\nemail#xxxxx@wolfcode.cn\n\n或者是:\n\nemail#xxx@520it.com"
+            return_content['Content'] = "邮箱绑定的格式:\n\nemail#xxxxx@wolfcode.cn\n\n或者是:\n\nemail#xxx@520it.com\n\n发送过程稍慢，请不要重复提交命令"
 
         elif re.findall("(?<=email#)([a-z]+[0-9]*@(wolfcode\.cn|520it\.com))",req_con):
             x1 = re.findall("(?<=email#)([a-z]+[0-9]*@(wolfcode\.cn|520it\.com))",req_con)
@@ -163,6 +164,42 @@ def weixin_checkin():
     return "xxoo"
 
 
+@register_api.route("/estimate/login/send_weixin_mail/")
+def decode_verify_code():
+     
+    token = request.args.get('token')
+
+    if not token:
+        return "错误，invalid的token"
+
+    admin = User.query.all()
+
+    print(admin)
+
+    #进行解码延签
+    try:
+    #首先生成一个序列化的对象
+        serializer = Serializer(Config.SECRET_KEY,300)
+        token_info = serializer.loads(token)
+        weixin_openid = token_info['weixin_openid']
+    except Exception as e:
+        print(e)
+        return "通过安检的时候，失败了！请联系管理员"
+
+    #成功了，然后就要尝试去数据库获取这个weixin_openid是否存在重复注册了。
+    #不过现在需要写一个model先，因为，得基本有一个数据库管理的models
+
+    #OK！models写好了，现在去看看能不能读取数据线
+
+    #OK！要进行数据查询了。
+    admin = User.query.all()
+
+    print(admin)
+
+
+    return "xxoo"
+
+    #然后，现在就进行数据库操作了。！没有错，就是跨数据库工作，虽然也是estimate数据库。
 
 
 def send_verify_code(weixin_opnid):
@@ -175,15 +212,16 @@ def send_verify_code(weixin_opnid):
     #把微信的id,添加到加密的token当中.
 
     token_info = serializer.dumps({'weixin_openid':weixin_opnid})
-
-    print(weixin_opnid)
-    print(token_info.decode())
-
-    msg = Message("你好",sender="lizhixuan@wolfcode.cn",recipients=['lizhixuan@wolfcode.cn',])
+    
+    msg = Message("叩丁狼-微信办公-实名登记",sender='lizhixuan@wolfcode.cn',recipients=['lizhixuan@wolfcode.cn',])
 
     msg.body = "hello world!"
 
-    msg.html("你好,你的微信id是:%s,你的token%s"%(weixin_opnid,token_info.decode()))
+    #编辑好一个用于激活邮箱地址的加密token
+
+    activate_link = "<a href='https://kumanxuan1.f3322.net/estimate/login/send_weixin_mail/?token=%s'>点我实名认证</a>"%token_info.decode()
+
+    msg.html = "hello,点击这个链接完成最后的实名认证:%s"%activate_link
 
     mail.send(msg)
 
