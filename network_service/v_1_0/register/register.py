@@ -28,9 +28,10 @@ import xmltodict
 import datetime
 from config import Config
 import hashlib
-from manage import mail
+from manage import mail,db
 from flask_mail import Message
 from network_service.v_1_0.register.models import User
+
 
 
 #验证码,现在要出动itsdangous了
@@ -125,8 +126,9 @@ def index():
             #邮箱正确,然后就马上发送邮件,根据两端相同的密钥
 
             print(return_content['ToUserName'])
-
-            if send_verify_code(return_content['ToUserName']):
+            print(x1[0][0])
+            
+            if send_verify_code(return_content['ToUserName'],x1[0][0]):
 
                 return_content['Content'] = "邮箱格式正确!发送成功!请检查你邮箱信件"
             else:
@@ -172,16 +174,13 @@ def decode_verify_code():
     if not token:
         return "错误，invalid的token"
 
-    admin = User.query.all()
-
-    print(admin)
-
     #进行解码延签
     try:
     #首先生成一个序列化的对象
-        serializer = Serializer(Config.SECRET_KEY,300)
+        serializer = Serializer(Config.SECRET_KEY,3000)
         token_info = serializer.loads(token)
         weixin_openid = token_info['weixin_openid']
+        email = token_info['email']
     except Exception as e:
         print(e)
         return "通过安检的时候，失败了！请联系管理员"
@@ -192,28 +191,72 @@ def decode_verify_code():
     #OK！models写好了，现在去看看能不能读取数据线
 
     #OK！要进行数据查询了。
-    admin = User.query.all()
+    print(weixin_openid)
+    #这一句是查询所有的数据,没有条件限制的.
+    # admin = User.query.all()
+    #下面这条语句是会输出查询语句,但是并没有执行,所以得后面加一个all,但是这个是获取数据的,所以呢,没必要吗
+    # admin = User.query.filter(User.weixin_openid==weixin_openid).all()
+
+    #所以下面这个语句,只需要一个first()就可以了.
+    admin = User.query.filter(User.email==email).first()
 
     print(admin)
+    if admin and admin.weixin_openid:
+        return "<h1>你已经注册过了,如果需要解绑的话,请联系管理员</h1>"
+
+    #然后呢,就可以操作数据库了.
+    elif not admin:
+        user_add = User()
+
+        user_add.username = weixin_openid
+        user_add.password = "6666"
+        user_add.email = email
+        user_add.department = 20
+        user_add.realname = 'wolfcode_employee'
+        user_add.weixin_openid = weixin_openid
+
+        #然后就尝试保存数据
+        #但是这个是针对没有绑定过的用户的.
+        try:
+            db.session.add(user_add)
+
+            #保存的时候,都是用commit,然后呢,假如这里有多个类似`user_add`这样的对象的话,使用db.session.add_all([user_add,])
+            db.session.commit()
+        except Exception as e:
+            print(e)
+            return "<h1>保存数据错误,db错误01</h1>"
+
+    else:
+
+        try:
+            admin.weixin_openid = weixin_openid
+            db.session.add(admin)
+            db.session.commit()
+        except Exception as e:
+            print(e)
+            return "<h1>保存数据错误,db错误02<h1>"
+        
 
 
-    return "xxoo"
+    #没有异常,就证明成功了.!
+
+    return "实名认证成功!"
 
     #然后，现在就进行数据库操作了。！没有错，就是跨数据库工作，虽然也是estimate数据库。
 
 
-def send_verify_code(weixin_opnid):
+def send_verify_code(weixin_opnid,email):
 
     #尝试获取open_id
     
     #初始化一个对象先
-    serializer = Serializer(Config.SECRET_KEY,300)
+    serializer = Serializer(Config.SECRET_KEY,3000)
 
     #把微信的id,添加到加密的token当中.
 
-    token_info = serializer.dumps({'weixin_openid':weixin_opnid})
+    token_info = serializer.dumps({'weixin_openid':weixin_opnid,'email':email})
     
-    msg = Message("叩丁狼-微信办公-实名登记",sender='lizhixuan@wolfcode.cn',recipients=['lizhixuan@wolfcode.cn',])
+    msg = Message("叩丁狼-微信办公-实名登记",sender='lizhixuan@wolfcode.cn',recipients=[email,])
 
     msg.body = "hello world!"
 
