@@ -107,10 +107,12 @@ def index():
         if re.findall("(评分系统|评分|评价|系统)",req_con):
 
             #获取通讯码
-            code = weixin_checkin_token()
+            # code = weixin_checkin_token()
             openid = return_content['ToUserName']
 
-            return_content['Content'] = "免账号密码登录\n可以点击这里登陆\n两个小时候需重新获取\n\n<a href='https://weixin.520langma.com/estimate/login/weixin_checkin/?code=%s&openid=%s'>点我点我</a>"%(code,openid)
+            token = token_create({'open_id':openid},21600)
+
+            return_content['Content'] = "免账号密码登录\n可以点击这里登陆\n6个小时候需重新获取\n\n<a href='https://weixin.520langma.com/estimate/login/weixin_checkin/?code=%s'>点我点我</a>"%token
             print(return_content['Content'])
 
         
@@ -280,7 +282,7 @@ def token_create(dict_object,expired):
 
     serializer = Serializer(Config.SECRET_KEY,expired)
     token_info = serializer.dumps(dict_object)
-    return token_info
+    return token_info.decode()
 
 def token_decode(token,expired):
     serializer = Serializer(Config.SECRET_KEY,expired)
