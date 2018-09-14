@@ -30,9 +30,11 @@ from config import Config
 import hashlib
 from manage import mail,db
 from flask_mail import Message
-from network_service.v_1_0.register.models import User
+from network_service.v_1_0.register.models import User,ClassRoom
+import requests
 
-
+#本微信公众号的号码
+host_weixin_openid = 'gh_8e01c367f25d'
 
 #验证码,现在要出动itsdangous了
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
@@ -83,7 +85,10 @@ def index():
         timestamp = time.time()
         ##捕捉一些野生openid
         return_content = decode_msg(content_xml)
+        print(return_content)
         req_con = return_content['Content']
+
+        weixin_openid = return_content['ToUserName']
         
         #现在问题就是，如何接收一坨的xml标签的内容呢？
 
@@ -114,14 +119,49 @@ def index():
 
             return_content['Content'] = "免账号密码登录\n可以点击这里登陆\n6个小时候需重新获取\n\n<a href='https://weixin.520langma.com/estimate/login/weixin_checkin/?code=%s'>点我点我</a>"%token
             print(return_content['Content'])
-
         
+        elif re.findall("课室\d+断|开网",req_con):
+            number = re.findall("课室\d+(?=断|开网)",req_con)
 
-        elif re.findall("(控制|教室|课室|网络|断网|开网|关闭|打开)",req_con):
-            
-            return_content['Content'] = "关于如何用语句控制网络的提示↓↓↓↓\n\n开启课室网络的语句格式:\n课室1开网\n\n关闭课室网络的语句格式:\n课室15断网"
-            return_content['Content'] += "\n\n\n备注：目前仅支持广州远程操作，上海和北京暂时只能使用<评价系统>里面的<网络管理>来控制网络"
-        
+            operate_online = re.findall("开网",req_con)
+
+            if not operate_online:
+                operate = "deny"
+            else:
+                operate = "permit"
+
+            #晕，还是需要去数据库获取课室的地址，不过，巧妙一点。用get的方式。
+
+            exist_class = ClassRoom.query.filter(ClassRoom.class_number==number[0],ClassRoom.block_number.in_((2,3,4,5))).first()
+            # exist_class = ClassRoom.query.filter(ClassRoom.class_number==number).first()
+
+            if not exist_class:
+                return_content['Content'] = "稳唔到课室（找不到课室）"
+            else:
+                try:
+                #获取具体课室的id
+                    class_id = exist_class.id
+                    #然后调动url了
+                    set_network_url = "https://weixin.520langma.com/estimate/index/set_network/?cls=%s&operate=%s&acl=520su1314"%(class_id,operate)
+
+                    #然后尝试去请求了
+                    res = redirect_after_weixin_checkin(weixin_openid,set_network_url)
+                    if res['success']:
+                        
+                        content = re.findall("<h2>.+</h2>",res['msg'].content.decode())
+
+                        return_content['Content'] = content[0]
+                        
+                    else:
+                        return_content['Content'] = res['msg']
+                    
+                except Exception as e:
+                    return_content['Content'] = "唔好意思（不好意思），设置失败：错误02"
+
+            #然后就可以调用开网断网的url地址了，这里应该是调用函数了。
+            #关键就是，拿到最新的cookie里面的sessionid数值就可以了
+            #然后有各式各样的调用，就设置一个公共方法去登陆吧。
+            #请求的url地址+weixin_openid就已经足够了，然后就是
         
         elif re.findall("邮箱|绑定",req_con):
 
@@ -138,9 +178,15 @@ def index():
             
             if send_verify_code(return_content['ToUserName'],x1[0][0]):
 
-                return_content['Content'] = "邮箱格式正确!发送成功!请检查你邮箱信件"
+                return_content['Content'] = "邮箱格式岩了（对了）!发送成功!请检查你邮箱信件"
             else:
-                return_content['Content'] = "发送失败"
+                return_content['Content'] = "发送唔成功（不成功）"
+
+        elif re.findall("(控制|教室|课室|网络|断网|开网|关闭|打开)",req_con):
+    
+            return_content['Content'] = "关于如何用语句控制网络的提示↓↓↓↓\n\n开启课室网络的语句格式:\n课室1开网\n\n关闭课室网络的语句格式:\n课室15断网"
+            return_content['Content'] += "\n\n\n备注：目前仅支持广州远程操作，上海和北京暂时只能使用<评价系统>里面的<网络管理>来控制网络"
+
         
         else:
 
@@ -154,22 +200,6 @@ def index():
     else:
         
         return render_template('index.html')
-
-@register_api.route("/index")
-def index2():
-    
-    #调用首页显示
-    return render_template('index.html')
-
-
-def weixin_checkin_token():
-
-    time1 = datetime.datetime.now().strftime("%Y-%M+%d=%H:%M:00")
-    print(time1)
-    time1 = Config.SECRET_KEY + time1
-    time1 = hashlib.md5(time1.encode()).hexdigest()
-    
-    return time1
 
 
 @register_api.route("/estimate/login/send_weixin_mail/")
@@ -187,7 +217,7 @@ def decode_verify_code():
         weixin_openid = token_info['weixin_openid']
         email = token_info['email']
     except Exception as e:
-        print(e)
+        
         return "<h1>通过安检的时候，失败了！请联系管理员</h1>"
 
     #成功了，然后就要尝试去数据库获取这个weixin_openid是否存在重复注册了。
@@ -206,7 +236,10 @@ def decode_verify_code():
     admin = User.query.filter(User.email==email).first()
 
     print(admin)
-    if admin and admin.weixin_openid:
+    print(admin.realname)
+    x1 = admin.weixin_openid
+    print(admin.weixin_openid)
+    if admin and x1:
         return "<h1>你已经注册过了,如果需要解绑的话,请联系管理员</h1>"
 
     #然后呢,就可以操作数据库了.
@@ -245,7 +278,7 @@ def decode_verify_code():
 
     #没有异常,就证明成功了.!
 
-    return "实名认证成功!"
+    return "<h1>实名认证成功!</h1>"
 
     #然后，现在就进行数据库操作了。！没有错，就是跨数据库工作，虽然也是estimate数据库。
 
@@ -270,7 +303,7 @@ def send_verify_code(weixin_opnid,email):
 
     #编辑好一个用于激活邮箱地址的加密token
 
-    activate_link = "<a href='https://kumanxuan1.f3322.net/estimate/login/send_weixin_mail/?token=%s'>点我实名认证</a>"%token.decode()
+    activate_link = "<a href='https://kumanxuan1.f3322.net/estimate/login/send_weixin_mail/?token=%s'>点我实名认证</a>"%token
 
     msg.html = "hello,点击这个链接完成最后的实名认证:%s"%activate_link
 
@@ -288,3 +321,63 @@ def token_decode(token,expired):
     serializer = Serializer(Config.SECRET_KEY,expired)
     token_info = serializer.loads(token)
     return token_info
+
+
+@register_api.route("/send_message")
+def test_independent_send_msg(target_weixin='oDet_1s8FnM_52XTGnikyeSiD0Nk',feedback='你的请求已经完成'):
+
+    timestamp = time.time()
+    #最重要是获取对象的open_id
+    return_content = {}
+    return_content['ToUserName'] = target_weixin
+    return_content['FromUserName'] = host_weixin_openid
+    return_content['CreateTime'] = int(timestamp)
+    return_content['MsgType'] = 'text'
+    return_content['Content'] = feedback
+    
+    content = xmltodict.unparse({'xml':return_content})
+
+    return content
+
+#设置一个专门用于获取访问评分系统的token
+def try_get_estimate_token(weixin_openid):
+
+    token = token_create({'open_id':weixin_openid},21600)
+
+    checkin_url = "https://weixin.520langma.com/estimate/login/weixin_checkin/?code=%s"%token
+    res1 = requests.get(checkin_url,verify=False)
+    content = res1.content.decode()
+    #然后根据内容，查看是否成功登陆
+    #随便找一个特征，去认定是否登陆成功
+    
+    valid_value = re.findall("当前站点",content)
+    if valid_value:
+        #如果为真的话，就返回token值
+        return res1.request.headers.get("cookie")
+    else:
+        False
+    
+
+#这里设计一个，接收微信公众号匹配的url跳转，但是，这里加了一层认证，根据weixin_openid来做认证
+
+def redirect_after_weixin_checkin(weixin_openid,request_url):
+
+    #调用这个函数的话，每次都得补充当前的weixin_openid+token去访问看看是否能成功获取access_token
+    #可以的话，继续下一步。
+    
+    access_token = try_get_estimate_token(weixin_openid)
+
+    if not access_token:
+
+        # return "获取授权失败，你是否已经绑定邮箱？"
+        return {"success":False,'msg':"获取授权失败，你绑定邮箱未？"}
+
+    headers = {'cookie':access_token}
+
+    try:
+        res1 = requests.get(request_url,headers=headers,verify=False)
+
+    except Exception as e:
+        print("提交请求失败")
+
+    return {"success":True,'msg':res1}
