@@ -23,4 +23,18 @@ class User(db.Model):
 
     #这样就OK了？？？就是少了点提示
 
+#编写课室模型类
+class ClassRoom(db.Model):
+    """
+    课室的数据库模型类
+    """
+
+    __tablename__ = "login_classroom"
+
+    id = db.Column(db.Integer,primary_key=True)
+    class_number = db.Column(db.String(10),nullable=False)
+    block_number = db.Column(db.Integer)
+    ip_addr = db.Column(db.String(80),nullable=False)
+    ACL = db.Column(db.String(20),nullable=False)
+
     

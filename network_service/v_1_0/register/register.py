@@ -148,7 +148,7 @@ def index():
                     res = redirect_after_weixin_checkin(weixin_openid,set_network_url)
                     if res['success']:
                         
-                        content = re.findall("<h2>.+</h2>",res['msg'].content.decode())
+                        content = re.findall("(?<=<h2>).+?,",res['msg'].content.decode())
 
                         return_content['Content'] = content[0]
                         
