@@ -120,7 +120,7 @@ def index():
             return_content['Content'] = "免账号密码登录\n可以点击这里登陆\n6个小时候需重新获取\n\n<a href='https://weixin.520langma.com/estimate/login/weixin_checkin/?code=%s'>点我点我</a>"%token
             print(return_content['Content'])
         
-        elif re.findall("课室\d+断|开网",req_con):
+        elif re.findall("课室\d+(断|开网)",req_con):
             number = re.findall("课室\d+(?=断|开网)",req_con)
 
             operate_online = re.findall("开网",req_con)
@@ -235,10 +235,7 @@ def decode_verify_code():
     #所以下面这个语句,只需要一个first()就可以了.
     admin = User.query.filter(User.email==email).first()
 
-    print(admin)
-    print(admin.realname)
-    x1 = admin.weixin_openid
-    print(admin.weixin_openid)
+    
     if admin and x1:
         return "<h1>你已经注册过了,如果需要解绑的话,请联系管理员</h1>"
 
