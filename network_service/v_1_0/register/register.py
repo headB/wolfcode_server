@@ -178,7 +178,7 @@ def index():
             
             if send_verify_code(return_content['ToUserName'],x1[0][0]):
 
-                return_content['Content'] = "邮箱格式岩了（对了）!发送成功!请检查你邮箱信件"
+                return_content['Content'] = "已经成功发送咗(了)激活码到你的邮箱，请点击邮箱里面的激活码进行实名绑定！"
             else:
                 return_content['Content'] = "发送唔成功（不成功）"
 
