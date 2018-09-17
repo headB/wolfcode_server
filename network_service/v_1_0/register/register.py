@@ -117,7 +117,7 @@ def index():
 
             token = token_create({'open_id':openid},21600)
 
-            return_content['Content'] = "免账号密码登录\n可以点击这里登陆\n6个小时候需重新获取\n\n<a href='https://weixin.520langma.com/estimate/login/weixin_checkin/?code=%s'>点我点我</a>"%token
+            return_content['Content'] = "免账号密码登录\n可以点击这里登陆\n6个小时候需重新获取\n\n<a href=\"https://weixin.520langma.com/estimate/login/weixin_checkin/?code=%s\">点我点我</a>"%token
             print(return_content['Content'])
         
         elif re.findall("课室\d+(断|开网)",req_con):
@@ -188,6 +188,25 @@ def index():
             return_content['Content'] += "\n\n\n备注：目前仅支持广州远程操作，上海和北京暂时只能使用<评价系统>里面的<网络管理>来控制网络"
 
         
+        elif re.findall("([wW][iI][fF][iI]|无线|密码)",req_con):
+            
+            user_info = is_user_binding(weixin_openid)
+
+            #可以先尝试组织wifi密码的表达方式
+
+            wifi_info_str = ""
+
+            for name,pwd in Config.WIFI_PWD.items():
+
+                wifi_info_str += "wifi名字:%s\n密码:%s \n\n"%(name,pwd)
+
+            if user_info:
+                return_content['Content'] = wifi_info_str
+            else:
+                return_content['Content'] = "你尚未进行实名公司邮箱认证"
+
+                
+
         else:
 
             return_content['Content'] = "操作无效，目前支持的关键字是：教室|课室|网络|断网|开网|关闭|打开|评分系统"
@@ -236,7 +255,8 @@ def decode_verify_code():
     admin = User.query.filter(User.email==email).first()
 
     
-    if admin and x1:
+    
+    if admin and admin.weixin_openid:
         return "<h1>你已经注册过了,如果需要解绑的话,请联系管理员</h1>"
 
     #然后呢,就可以操作数据库了.
@@ -354,6 +374,17 @@ def try_get_estimate_token(weixin_openid):
     else:
         False
     
+
+#尝试获取查看是否具有权限
+def is_user_binding(weixin_openid):
+
+    user_info = User.query.filter(User.weixin_openid==weixin_openid).first()
+
+    if user_info:
+        return True
+    else:
+        return False
+
 
 #这里设计一个，接收微信公众号匹配的url跳转，但是，这里加了一层认证，根据weixin_openid来做认证
 
