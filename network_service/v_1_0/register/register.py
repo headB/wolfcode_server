@@ -181,7 +181,7 @@ def index():
                 return_content['Content'] = "已经成功发送咗(了)激活码到你的邮箱，请点击邮箱里面的激活码进行实名绑定！"
             else:
                 return_content['Content'] = "发送唔成功（不成功）"
-
+ 
         elif re.findall("(控制|教室|课室|网络|断网|开网|关闭|打开)",req_con):
     
             return_content['Content'] = "关于如何用语句控制网络的提示↓↓↓↓\n\n开启课室网络的语句格式:\n课室1开网\n\n关闭课室网络的语句格式:\n课室15断网"
@@ -209,7 +209,7 @@ def index():
 
         else:
 
-            return_content['Content'] = "操作无效，目前支持的关键字是：教室|课室|网络|断网|开网|关闭|打开|评分系统"
+            return_content['Content'] = "操作无效，目前支持的关键字是：教室|课室|网络|断网|开网|关闭|打开|评分系统|wifi"
             
 
         x1 = xmltodict.unparse({'xml':return_content})
