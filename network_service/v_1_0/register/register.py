@@ -64,21 +64,9 @@ def decode_msg(xml_object):
 
 @register_api.route("/",methods=["GET","POST"])
 def index():
-    #调用首页显示
-    #但是根据实际的请求来操作
-    #例如消息都是post的方式
-    #然后普通pc访问都是get方式
     
     if request.method == "POST":
         
-        #接收一些参数
-        #1.ToUserName
-        #2.FromUserName
-        #3.Create
-        #4.MsgType
-        #5.Content
-        #6.MsgId
-
         content_xml = request.data
     
         # timestamp = time.mktime(datetime.datetime.now().timetuple())
@@ -90,24 +78,6 @@ def index():
 
         weixin_openid = return_content['ToUserName']
         
-        #现在问题就是，如何接收一坨的xml标签的内容呢？
-
-        #根据请求，返回不同的响应
-
-        #假如
-
-        #匹配到 #课室4#开网
-
-        ##想想#号也是太难输入了，反正参数不多，直接输入整条语句吧。
-
-        #或者类似这样 #讲师/班主任/辅导员评价#名字#课室
-        #评价算了吧。。。。需要的信息太多了。！
-
-        #第一步肯定是直接尝试捕捉命令，但是如果失败，就输出提示
-        #if re.findall("")
-
-
-        #然后到了最后就输出所有提示，当前暂时就是涉及到关键字，课室，教室，网络，开网，断网
 
         if re.findall("(评分系统|评分|评价|系统)",req_con):
 
@@ -239,19 +209,8 @@ def decode_verify_code():
         
         return "<h1>通过安检的时候，失败了！请联系管理员</h1>"
 
-    #成功了，然后就要尝试去数据库获取这个weixin_openid是否存在重复注册了。
-    #不过现在需要写一个model先，因为，得基本有一个数据库管理的models
-
-    #OK！models写好了，现在去看看能不能读取数据线
-
-    #OK！要进行数据查询了。
     print(weixin_openid)
-    #这一句是查询所有的数据,没有条件限制的.
-    # admin = User.query.all()
-    #下面这条语句是会输出查询语句,但是并没有执行,所以得后面加一个all,但是这个是获取数据的,所以呢,没必要吗
-    # admin = User.query.filter(User.weixin_openid==weixin_openid).all()
 
-    #所以下面这个语句,只需要一个first()就可以了.
     admin = User.query.filter(User.email==email).first()
 
     
@@ -398,7 +357,7 @@ def redirect_after_weixin_checkin(weixin_openid,request_url):
     if not access_token:
 
         # return "获取授权失败，你是否已经绑定邮箱？"
-        return {"success":False,'msg':"获取授权失败，你绑定邮箱未？"}
+        return {"success":False,'msg':"获取授权失败，你绑定邮箱未？请输入关键字：邮箱，来获取更多信息"}
 
     headers = {'cookie':access_token}
 
