@@ -135,7 +135,7 @@ def index():
         
         elif re.findall("邮箱|绑定",req_con):
 
-            return_content['Content'] = "邮箱绑定的格式:\n\nemail#xxxxx@wolfcode.cn\n\n或者是:\n\nemail#xxx@520it.com\n\n发送过程稍慢，请不要重复提交命令"
+            return_content['Content'] = "邮箱绑定,请你按一定要求输入你的邮箱地址\n输入的格式为:\n\nemail#xxxxx@wolfcode.cn\n\n或者是:\n\nemail#xxx@520it.com\n\n发送过程稍慢，请不要重复提交命令"
 
         elif re.findall("(?<=email#)([a-z]+[0-9]*@(wolfcode\.cn|520it\.com))",req_con):
             x1 = re.findall("(?<=email#)([a-z]+[0-9]*@(wolfcode\.cn|520it\.com))",req_con)
