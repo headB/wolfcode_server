@@ -155,7 +155,7 @@ def index():
         elif re.findall("(控制|教室|课室|网络|断网|开网|关闭|打开)",req_con):
     
             return_content['Content'] = "关于如何用语句控制网络的提示↓↓↓↓\n\n开启课室网络的语句格式:\n课室1开网\n\n关闭课室网络的语句格式:\n课室15断网"
-            return_content['Content'] += "\n\n\n备注：目前仅支持广州远程操作，上海和北京暂时只能使用<评价系统>里面的<网络管理>来控制网络"
+            return_content['Content'] += "\n\n\n备注：目前仅支持广州远程操作，上海和北京暂时只能使用电脑网页端的<评价系统>里面的<网络管理>来控制网络"
 
         
         elif re.findall("([wW][iI][fF][iI]|无线|密码)",req_con):
