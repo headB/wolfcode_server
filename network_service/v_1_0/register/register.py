@@ -53,7 +53,6 @@ def index():
         ##捕捉一些野生openid
 
         return_content = decode_msg(content_xml)
-        print(return_content)
         req_con = return_content['Content']
 
         weixin_openid = return_content['ToUserName']
@@ -68,7 +67,6 @@ def index():
             token = token_create({'open_id':openid},21600)
 
             return_content['Content'] = "免账号密码登录\n可以点击这里登陆\n6个小时候需重新获取\n\n<a href=\"https://weixin.520langma.com/estimate/login/weixin_checkin/?code=%s\">点我点我</a>"%token
-            print(return_content['Content'])
         
         elif re.findall("课室\d+(断|开网)",req_con):
             number = re.findall("课室\d+(?=断|开网)",req_con)
@@ -119,12 +117,9 @@ def index():
 
         elif re.findall("(?<=email#)([a-z]+[0-9]*@(wolfcode\.cn|520it\.com))",req_con):
             x1 = re.findall("(?<=email#)([a-z]+[0-9]*@(wolfcode\.cn|520it\.com))",req_con)
-            #print(x1[0][0])
 
             #邮箱正确,然后就马上发送邮件,根据两端相同的密钥
 
-            print(return_content['ToUserName'])
-            print(x1[0][0])
             
             if send_verify_code(return_content['ToUserName'],x1[0][0]):
 
@@ -189,7 +184,6 @@ def decode_verify_code():
         
         return "<h1>通过安检的时候，失败了！请联系管理员</h1>"
 
-    print(weixin_openid)
 
     admin = User.query.filter(User.email==email).first()
 
@@ -217,7 +211,8 @@ def decode_verify_code():
             #保存的时候,都是用commit,然后呢,假如这里有多个类似`user_add`这样的对象的话,使用db.session.add_all([user_add,])
             db.session.commit()
         except Exception as e:
-            print(e)
+            
+            session.rollback()
             return "<h1>保存数据错误,db错误01</h1>"
 
     else:
@@ -227,7 +222,8 @@ def decode_verify_code():
             db.session.add(admin)
             db.session.commit()
         except Exception as e:
-            print(e)
+            
+            db.session.rollback()
             return "<h1>保存数据错误,db错误02<h1>"
         
 
@@ -345,6 +341,6 @@ def redirect_after_weixin_checkin(weixin_openid,request_url):
         res1 = requests.get(request_url,headers=headers,verify=False)
 
     except Exception as e:
-        print("提交请求失败")
+        pass
 
     return {"success":True,'msg':res1}
