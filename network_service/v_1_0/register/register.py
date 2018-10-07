@@ -79,12 +79,18 @@ def index():
                 operate = "permit"
 
             #晕，还是需要去数据库获取课室的地址，不过，巧妙一点。用get的方式。
-
-            exist_class = ClassRoom.query.filter(ClassRoom.class_number==number[0],ClassRoom.block_number.in_((2,3,4,5))).first()
+            try:
+                exist_class = ClassRoom.query.filter(ClassRoom.class_number==number[0],ClassRoom.block_number.in_((2,3,4,5))).first()
             # exist_class = ClassRoom.query.filter(ClassRoom.class_number==number).first()
+            
+                if not exist_class:
+                    return_content['Content'] = "稳唔到课室（找不到课室）"
+                
+            except Exception as e:
 
-            if not exist_class:
-                return_content['Content'] = "稳唔到课室（找不到课室）"
+                return_content['Content'] = "数据库连接出现异常！"
+                db.session.rollback()
+            
             else:
                 try:
                 #获取具体课室的id
@@ -212,7 +218,7 @@ def decode_verify_code():
             db.session.commit()
         except Exception as e:
             
-            session.rollback()
+            db.session.rollback()
             return "<h1>保存数据错误,db错误01</h1>"
 
     else:
