@@ -12,7 +12,7 @@ import logging
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_POOL_SIZE'] = 100
+app.config['SQLALCHEMY_POOL_SIZE'] = 10
 app.config['SQLALCHEMY_POOL_RECYCLE'] = 280
 
 
@@ -22,7 +22,7 @@ app.config.from_object(config.Config)
 mail = Mail(app)
 
 #实例化数据库
-db = SQLAlchemy()
+db = SQLAlchemy(session_options = {'autocommit':True})
 
 db.init_app(app)
 
