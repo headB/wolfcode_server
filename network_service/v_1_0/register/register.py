@@ -169,6 +169,13 @@ def index():
 
     else:
 
+        #这里添加一个get请求,这里get请求就捆绑一个数据库请求,大概就是这样子
+        if request.args.get("beetle"):
+            if request.args.get("beetle") == "diaonimienijiangmiea":
+                user_info = User.query.filter().first()
+                
+
+
         return render_template('index.html')
 
 
