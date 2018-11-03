@@ -123,7 +123,32 @@ def index():
 
         elif re.findall("验证|认证",req_con):
 
-            return_content['Content'] = "请留意好,你的随机返回验证码是这xxxxx"
+            from datetime import datetime as dates
+            import random
+
+            now = dates.now().strftime("%m-%d %H:%M")
+            verify_code = now+" "+("".join([ str(random.randint(0,9)) for x in range(4)]))
+            
+            
+            #要么成功插入待认证数据,要么就是已经存在认证数据,又或者数据库异常
+            try:
+                admin = User(
+                    username = weixin_openid,
+                    password = 6666,
+                    department = 20,
+                    email = "xxx@wolfcode.cn",
+                    quick_verify = verify_code
+                )
+
+                db.session.add(admin)
+                db.session.commit()
+
+            except Exception:
+                return_content['Content'] = "出錯!可能你認證過嘅數據存在系數據庫當中,唔使重複申請認證!"
+
+            
+
+            return_content['Content'] = "申請認證成功,呢個系你嘅隨機驗證:%s,請keep好"%verify_code
 
 
         elif re.findall("(?<=email#)([a-z]+[0-9]*@(wolfcode\.cn|520it\.com))",req_con):
