@@ -7,7 +7,7 @@ import xmltodict
 import datetime
 from config import Config
 import hashlib
-from manage import mail,db
+from manage import mail,db,logging
 from flask_mail import Message
 from network_service.v_1_0.register.models import User,ClassRoom
 import requests
@@ -143,7 +143,8 @@ def index():
                 db.session.add(admin)
                 db.session.commit()
 
-            except Exception:
+            except Exception as e:
+                logging.error(e)
                 return_content['Content'] = "出錯!可能你認證過嘅數據存在系數據庫當中,唔使重複申請認證!"
 
             else:
