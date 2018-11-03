@@ -121,6 +121,11 @@ def index():
 
             return_content['Content'] = "邮箱绑定,请你按一定要求输入你的邮箱地址\n输入的格式带有前缀 'email#'然后加上'xxxx@wolfcode.cn'，两部分信息\n，示例:\n\nemail#xxxxx@wolfcode.cn\n\n或者是:\n\nemail#xxx@520it.com\n\n发送过程稍慢，请不要重复提交命令"
 
+        elif re.findall("验证|认证",req_con):
+
+            return_content['Content'] = "请留意好,你的随机返回验证码是这xxxxx"
+
+
         elif re.findall("(?<=email#)([a-z]+[0-9]*@(wolfcode\.cn|520it\.com))",req_con):
             x1 = re.findall("(?<=email#)([a-z]+[0-9]*@(wolfcode\.cn|520it\.com))",req_con)
 
