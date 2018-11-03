@@ -146,9 +146,9 @@ def index():
             except Exception:
                 return_content['Content'] = "出錯!可能你認證過嘅數據存在系數據庫當中,唔使重複申請認證!"
 
-            
+            else:
 
-            return_content['Content'] = "申請認證成功,呢個系你嘅隨機驗證:%s,請keep好"%verify_code
+                return_content['Content'] = "申請認證成功,呢個系你嘅隨機驗證:%s,請keep好"%verify_code
 
 
         elif re.findall("(?<=email#)([a-z]+[0-9]*@(wolfcode\.cn|520it\.com))",req_con):
