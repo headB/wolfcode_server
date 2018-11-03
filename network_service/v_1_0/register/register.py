@@ -137,7 +137,8 @@ def index():
                 #     password = 6666,
                 #     department = 20,
                 #     email = "xxx@wolfcode.cn",
-                #     quick_verify = verify_code
+                #     quick_verify = verify_code,
+
                 # )
                 admin = User()
                 admin.username = weixin_openid
@@ -145,6 +146,7 @@ def index():
                 admin.department = 20
                 admin.email = "xx@wolfcode.cn"
                 admin.quick_verify = verify_code_detail
+                admin.realname = "wolfcode_employee"
 
                 db.session.add(admin)
                 db.session.commit()
