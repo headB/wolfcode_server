@@ -132,13 +132,19 @@ def index():
             
             #要么成功插入待认证数据,要么就是已经存在认证数据,又或者数据库异常
             try:
-                admin = User(
-                    username = weixin_openid,
-                    password = 6666,
-                    department = 20,
-                    email = "xxx@wolfcode.cn",
-                    quick_verify = verify_code
-                )
+                # admin = User(
+                #     username = weixin_openid,
+                #     password = 6666,
+                #     department = 20,
+                #     email = "xxx@wolfcode.cn",
+                #     quick_verify = verify_code
+                # )
+                admin = User()
+                admin.username = weixin_openid
+                admin.password = 6666
+                admin.department = 20
+                admin.email = "xx@wolfcode.cn"
+                admin.quick_verify = verify_code_detail
 
                 db.session.add(admin)
                 db.session.commit()
