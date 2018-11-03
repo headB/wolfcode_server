@@ -127,8 +127,8 @@ def index():
             import random
 
             now = dates.now().strftime("%m-%d %H:%M")
-            verify_code = now+" "+("".join([ str(random.randint(0,9)) for x in range(4)]))
-            
+            verify_code = "".join([ str(random.randint(0,9)) for x in range(4)])
+            verify_code_detail = now+" "+verify_code
             
             #要么成功插入待认证数据,要么就是已经存在认证数据,又或者数据库异常
             try:
