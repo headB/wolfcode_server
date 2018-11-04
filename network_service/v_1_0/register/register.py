@@ -43,7 +43,7 @@ def decode_msg(xml_object):
 
 @register_api.route("/",methods=["GET","POST"])
 def index():
-    
+    db.session.close()
     if request.method == "POST":
         
         content_xml = request.data
@@ -129,35 +129,47 @@ def index():
             now = dates.now().strftime("%m-%d %H:%M")
             verify_code = "".join([ str(random.randint(0,9)) for x in range(4)])
             verify_code_detail = now+" "+verify_code
+
+            is_exist1 = User.query.filter(User.weixin_openid==weixin_openid).first()
+            is_exist2 = User.query.filter(User.username==weixin_openid).first()
+
+            if is_exist1 or is_exist2:
+                return_content['Content'] = "出錯!你認證過嘅數據存在系數據庫當中,唔使重複申請認證!"
+            else:
+                # return_content['Content'] = "出錯!數據庫异常!!"
             
             #要么成功插入待认证数据,要么就是已经存在认证数据,又或者数据库异常
-            try:
-                # admin = User(
-                #     username = weixin_openid,
-                #     password = 6666,
-                #     department = 20,
-                #     email = "xxx@wolfcode.cn",
-                #     quick_verify = verify_code,
+                try:
+                    admin = User(
+                        username = weixin_openid,
+                        password = "6666",
+                        department = 20,
+                        email = "xxx@wolfcode.cn",
+                        quick_verify = verify_code_detail,
+                        realname = "wolfcode_employee"
 
-                # )
-                admin = User()
-                admin.username = weixin_openid
-                admin.password = 6666
-                admin.department = 20
-                admin.email = "xx@wolfcode.cn"
-                admin.quick_verify = verify_code_detail
-                admin.realname = "wolfcode_employee"
+                    )
+                    # admin = User()
+                    # admin.username = weixin_openid
+                    # admin.password = "6666"
+                    # admin.department = 20
+                    # admin.email = "xx@wolfcode.cn"
+                    # admin.quick_verify = verify_code_detail
+                    # admin.realname = "wolfcode_employee"
 
-                db.session.add(admin)
-                db.session.commit()
+                    
+                    db.session.add(admin)
+                    db.session.commit()
 
-            except Exception as e:
-                logging.error(e)
-                return_content['Content'] = "出錯!可能你認證過嘅數據存在系數據庫當中,唔使重複申請認證!"
+                except Exception as e:
+                    logging.error(e)
+                    logging.error(admin.__dict__)
+                    db.session.rollback()
+                    return_content['Content'] = "出錯!數據庫异常!!"
 
-            else:
+                else:
 
-                return_content['Content'] = "申請認證成功,呢個系你嘅隨機驗證:%s,請keep好"%verify_code
+                    return_content['Content'] = "申請認證成功,呢個系你嘅隨機驗證:%s,請keep好"%verify_code
 
 
         elif re.findall("(?<=email#)([a-z]+[0-9]*@(wolfcode\.cn|520it\.com))",req_con):
@@ -366,6 +378,7 @@ def try_get_estimate_token(weixin_openid):
 def is_user_binding(weixin_openid):
 
     user_info = User.query.filter(User.weixin_openid==weixin_openid).first()
+    
 
     if user_info:
         return True
