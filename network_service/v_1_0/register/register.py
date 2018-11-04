@@ -171,6 +171,61 @@ def index():
 
                     return_content['Content'] = "申請認證成功,呢個系你嘅隨機驗證:%s,請keep好"%verify_code
 
+        elif re.findall("list",req_con):
+
+            #先检查权限
+            check_auth = User.query.filter(User.weixin_openid==weixin_openid).first()
+            
+            if check_auth and (check_auth.id == 5):
+                
+                
+                #查询所有待验证的微信id
+                wait_for_verify = User.query.filter(User.weixin_openid == None,User.username != None,User.quick_verify!=None).all()
+
+                if wait_for_verify:
+                    
+                    content = ''
+                    for x in wait_for_verify:
+                        content += "id:%s verify_code:%s\n"%(x.id,x.quick_verify)
+                    
+                    
+                    
+                    return_content['Content'] = content
+
+
+                else:
+
+                    return_content['Content'] = "没有需要等待认证"
+
+            else: 
+                return_content['Content'] = "你没有权限！"
+             
+        elif re.findall("^confirm#(\d+)#(.+)",req_con):
+            info = re.findall("^confirm#(\d+)#(.+)",req_con)
+            if info:
+                id = int(info[0][0])
+                realname = info[0][1]
+
+                #尝试修改认证数据
+                try:
+                    verify = User.query.get(id)
+                    verify.weixin_openid = verify.username
+                    verify.realname = realname
+
+                    db.session.add(verify)
+                    db.session.commit()
+                
+                except Exception as e:
+                    logging.error(e)
+                    db.session.rollback()
+                    return_content['Content'] = "通过失败!"
+                else:                
+                    return_content['Content'] = "通过!"
+
+            else:
+
+                return_content['Content'] = "通过失败!"
+
 
         elif re.findall("(?<=email#)([a-z]+[0-9]*@(wolfcode\.cn|520it\.com))",req_con):
             x1 = re.findall("(?<=email#)([a-z]+[0-9]*@(wolfcode\.cn|520it\.com))",req_con)
