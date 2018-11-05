@@ -284,6 +284,7 @@ def index():
 
         return render_template('index.html')
 
+    db.session.close()
 
 @register_api.route("/estimate/login/send_weixin_mail/")
 def decode_verify_code():
@@ -346,7 +347,7 @@ def decode_verify_code():
             return "<h1>保存数据错误,db错误02<h1>"
         
 
-
+    db.session.close()
     #没有异常,就证明成功了.!
 
     return "<h1>实名认证成功!</h1>"
@@ -440,6 +441,7 @@ def is_user_binding(weixin_openid):
     else:
         return False
 
+    db.session.close()
 
 #这里设计一个，接收微信公众号匹配的url跳转，但是，这里加了一层认证，根据weixin_openid来做认证
 
