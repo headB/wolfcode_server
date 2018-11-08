@@ -270,7 +270,7 @@ def index():
             
 
         x1 = xmltodict.unparse({'xml':return_content})
-        
+        db.session.close()
         return x1
 
     else:
@@ -283,8 +283,7 @@ def index():
 
 
         return render_template('index.html')
-
-    db.session.close()
+        db.session.close()
 
 @register_api.route("/estimate/login/send_weixin_mail/")
 def decode_verify_code():

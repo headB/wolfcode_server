@@ -19,7 +19,8 @@ class User(db.Model):
     email = db.Column(db.String(60),unique=True,nullable=False)#密码
     realname = db.Column(db.String(30),nullable=False)#密码
     password = db.Column(db.String(100),nullable=False)#密码
-    weixin_openid = db.Column(db.String(100),unique=True,nullable=False)#密码
+    weixin_openid = db.Column(db.String(100),unique=True,nullable=True)#密码
+    xcx_openid = db.Column(db.String(100),unique=True,nullable=True)#密码
     quick_verify = db.Column(db.String(100),unique=False,nullable=True)#密码
 
     #这样就OK了？？？就是少了点提示
