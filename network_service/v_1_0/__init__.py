@@ -1,10 +1,7 @@
 from flask import Blueprint
 
 register_api = Blueprint("register",__name__)
-postman_api = Blueprint("postman",__name__)
-network_api = Blueprint("network",__name__)
+micro_app_api = Blueprint("micro_app",__name__)
 
-
-from .network_manager import ssh
-from .postman import postman
+from . import micro_app
 from .register import register
