@@ -171,6 +171,7 @@ def index():
 
                     return_content['Content'] = "申請認證成功,呢個系你嘅隨機驗證:%s,請keep好"%verify_code
 
+        #复用验证流程,添加多一个关键字
         elif re.findall("list",req_con):
 
             #先检查权限
@@ -191,6 +192,7 @@ def index():
                     
                     
                     return_content['Content'] = content
+                    return_content['Content'] += "\n\n提示:输入confirm#[需要通过的id]#[姓名或者备注],如果是是认证小程序,请添加#x"
 
 
                 else:
@@ -202,6 +204,13 @@ def index():
              
         elif re.findall("^confirm#(\d+)#(.+)",req_con):
             info = re.findall("^confirm#(\d+)#(.+)",req_con)
+
+            ##复用验证功能.添加认证小程序,或者,
+            ##可以给已经认证公众号的同事,添加快速添加小程序认证功能,这个再说吧.现在不急.
+
+            set_xcx_verify = re.findall("^confirm#\d+#.+(#x)",req_con)
+            
+
             if info:
                 id = int(info[0][0])
                 realname = info[0][1]
@@ -209,7 +218,10 @@ def index():
                 #尝试修改认证数据
                 try:
                     verify = User.query.get(id)
-                    verify.weixin_openid = verify.username
+                    if  set_xcx_verify:
+                        verify.xcx_openid = verify.username
+                    else:
+                        verify.weixin_openid = verify.username
                     verify.realname = realname
 
                     db.session.add(verify)
