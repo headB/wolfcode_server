@@ -17,7 +17,7 @@ def index():
 
     return "你好,这是用于微信小程序的!"
 
-@micro_app_api.route("/verify")
+@micro_app_api.route("/verify",methods=['GET','POST'])
 def request_verify():
 
     if request.method == "GET":
@@ -50,7 +50,7 @@ def request_verify():
                 return "bakckend network error"
         
         except Exception:
-            return jsonify()
+            return jsonify(message)
 
         print(openid)
         if  openid:
@@ -74,6 +74,12 @@ def request_verify():
 
     
     else:
+        res = request.data
+        print(res)
+
+        register_info = request.get_json()
+        print(register_info)
+
         return jsonify({"status":"请求错误,请使用get方法"})
 
     
