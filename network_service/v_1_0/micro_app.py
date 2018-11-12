@@ -1,9 +1,10 @@
 from . import micro_app_api
 import requests
 from config import Config
-from flask import request
+from flask import request,jsonify
 import json
 from network_service.v_1_0.register.models import User
+from manage import db
 
 
 @micro_app_api.route("/")
@@ -21,7 +22,12 @@ def request_verify():
 
     if request.method == "GET":
 
+        message = {}
+        message['statusCode'] = '201'
+        message['status'] = "初始状态,不带数据"
+
         code = request.args.get("code")
+        realname = request.args.get("realname")
 
 
         get_openid_url = "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code"%(Config.app_id,Config.app_secret,code)
@@ -44,20 +50,33 @@ def request_verify():
                 return "bakckend network error"
         
         except Exception:
-            return "backend request is bad"
+            return jsonify()
 
         print(openid)
         if  openid:
             #可以使用数据库查询openid是否存在于数据库当中    
             exist_openid = User.query.filter(User.xcx_openid==openid).first()
+            
+            
 
-            print(exist_openid)
+            if exist_openid:
+                pass
+            else:
+                #设置回复信息,
+                
+                message['statusCode'] = '201'
+                message['status'] = '没有用户相关信息'
+                
+
+            db.session.close()
         
-        return "OK"
+        return jsonify(message)
 
     
     else:
-        return "请使用get方法,非post!"
+        return jsonify({"status":"请求错误,请使用get方法"})
+
+    
 
 
 

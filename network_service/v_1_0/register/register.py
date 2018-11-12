@@ -216,16 +216,33 @@ def index():
                 realname = info[0][1]
 
                 #尝试修改认证数据
+
+                #ok,想将公众号刚提交的用户,关联到那些,可能已经登陆的用户信息
+                #所以,现在用户名就是关键了.realname就是关键了.
+                #所以需要修改规则了
+
                 try:
                     verify = User.query.get(id)
                     if  set_xcx_verify:
-                        verify.xcx_openid = verify.username
+                        verify.xcx_openid = verify.xcx_openid_temp
                     else:
                         verify.weixin_openid = verify.username
-                    verify.realname = realname
-
+                    
                     db.session.add(verify)
                     db.session.commit()
+                    # verify.realname = realname
+
+                    #查询以realname为条件,是否存在数据
+                    is_exist = User.query.filter(User.realname==realname).first()
+
+                    if is_exist:
+                        is_exist.xcx_openid = verify.xcx_openid
+                        is_exist.weixin_openid = verify.weixin_openid
+
+                        db.session.add(is_exist)
+                        db.session.delete(verify)
+                        db.session.commit()
+                        
                 
                 except Exception as e:
                     logging.error(e)
