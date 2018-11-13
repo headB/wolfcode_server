@@ -45,7 +45,8 @@ def request_verify():
             
 
             if exist_openid:
-                pass
+                message['statusCode'] = '200'
+                message['status'] = "用户名:%s"%(exist_openid.realname)
             else:
                 #设置回复信息,
                 

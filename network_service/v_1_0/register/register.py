@@ -216,12 +216,12 @@ def index():
             ##复用验证功能.添加认证小程序,或者,
             ##可以给已经认证公众号的同事,添加快速添加小程序认证功能,这个再说吧.现在不急.
 
-            set_xcx_verify = re.findall("^confirm#\d+#.+(#x)",req_con)
+            set_xcx_verify = re.findall("^confirm#\d+#(.+)#x",req_con)
             
 
             if info:
                 id = int(info[0][0])
-                realname = info[0][1]
+                realname = set_xcx_verify[0]
 
                 #尝试修改认证数据
 
