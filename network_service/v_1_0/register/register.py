@@ -11,6 +11,7 @@ from manage import mail,db,logging
 from flask_mail import Message
 from network_service.v_1_0.register.models import User,ClassRoom
 import requests
+from sqlalchemy import or_
 
 #本微信公众号的号码
 host_weixin_openid = 'gh_8e01c367f25d'
@@ -142,6 +143,7 @@ def index():
                 try:
                     admin = User(
                         username = weixin_openid,
+                        weixin_openid_tmp = weixin_openid,
                         password = "6666",
                         department = 20,
                         email = "xxx@wolfcode.cn",
@@ -181,18 +183,24 @@ def index():
                 
                 
                 #查询所有待验证的微信id
-                wait_for_verify = User.query.filter(User.weixin_openid == None,User.username != None,User.quick_verify!=None).all()
+                wait_for_verify = User.query.filter(or_(User.weixin_openid_tmp != None,User.xcx_openid_tmp!=None)).all()
 
                 if wait_for_verify:
                     
                     content = ''
                     for x in wait_for_verify:
-                        content += "id:%s verify_code:%s\n"%(x.id,x.quick_verify)
+                        
+                        if x.weixin_openid_tmp:
+                            types = "公众号认证"
+                        else:
+                            types = "小程序认证"
+
+                        content += "%s id:%s verify_code:%s\n"%(types,x.id,x.quick_verify)
                     
                     
                     
                     return_content['Content'] = content
-                    return_content['Content'] += "\n\n提示:输入confirm#[需要通过的id]#[姓名或者备注],如果是是认证小程序,请添加#x"
+                    return_content['Content'] += "\n\n提示:输入confirm#[需要通过的id]#[汉语名字],如果是是认证小程序,请添加#x"
 
 
                 else:
@@ -224,9 +232,13 @@ def index():
                 try:
                     verify = User.query.get(id)
                     if  set_xcx_verify:
-                        verify.xcx_openid = verify.xcx_openid_temp
+                        verify.xcx_openid = verify.xcx_openid_tmp
+                        verify.xcx_openid_tmp = None
                     else:
-                        verify.weixin_openid = verify.username
+                        verify.weixin_openid = verify.weixin_openid_tmp
+                        verify.weixin_openid_tmp = None
+                    
+                    verify.realname = realname
                     
                     db.session.add(verify)
                     db.session.commit()
@@ -235,9 +247,14 @@ def index():
                     #查询以realname为条件,是否存在数据
                     is_exist = User.query.filter(User.realname==realname).first()
 
-                    if is_exist:
-                        is_exist.xcx_openid = verify.xcx_openid
-                        is_exist.weixin_openid = verify.weixin_openid
+                    if is_exist and (is_exist.id != verify.id):
+                        
+                        if  set_xcx_verify:
+                            is_exist.xcx_openid = verify.xcx_openid
+                            is_exist.xcx_openid_tmp = None
+                        else:
+                            is_exist.weixin_openid = verify.weixin_openid
+                            is_exist.weixin_openid_tmp = None
 
                         db.session.add(is_exist)
                         db.session.delete(verify)
@@ -310,9 +327,9 @@ def index():
                 user_info = User.query.filter().first()
                 
 
-
-        return render_template('index.html')
         db.session.close()
+        return render_template('index.html')
+        
 
 @register_api.route("/estimate/login/send_weixin_mail/")
 def decode_verify_code():

@@ -4,7 +4,8 @@ from config import Config
 from flask import request,jsonify
 import json
 from network_service.v_1_0.register.models import User
-from manage import db
+from manage import db,logging
+from datetime import datetime
 
 
 @micro_app_api.route("/")
@@ -19,38 +20,22 @@ def index():
 
 @micro_app_api.route("/verify",methods=['GET','POST'])
 def request_verify():
+    message = {}
+    message['statusCode'] = '201'
+    message['status'] = "初始状态,不带数据"
 
     if request.method == "GET":
 
-        message = {}
-        message['statusCode'] = '201'
-        message['status'] = "初始状态,不带数据"
-
         code = request.args.get("code")
-        realname = request.args.get("realname")
 
-
-        get_openid_url = "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code"%(Config.app_id,Config.app_secret,code)
-
-        #去请求,尝试获取用户的openid
-        openid = ''
-        try:
-            res = requests.get(url=get_openid_url,timeout=4)
-            print(res.status_code)
-            if res.status_code == 200:
-                content = res.content.decode()
-                print(content)
-
-                #将内容转换成为字典
-
-                info = json.loads(content)
-                openid = info['openid']
-
-            else:
-                return "bakckend network error"
-        
-        except Exception:
+        if not code:
+            message['status'] = '缺少关键词code'
             return jsonify(message)
+
+
+        openid = code2openid(code)
+        #去请求,尝试获取用户的openid
+        
 
         print(openid)
         if  openid:
@@ -74,17 +59,87 @@ def request_verify():
 
     
     else:
-        res = request.data
-        print(res)
-
+        
         register_info = request.get_json()
         print(register_info)
 
-        return jsonify({"status":"请求错误,请使用get方法"})
+        realname = register_info['realname']
+        code = register_info['code']
+
+        if not all([realname,code]):
+            message['status'] = "参数不完整"
+            return jsonify(message)
+
+        #然后就是调用 解code为openid的函数了.
+
+        #获取的到openid,
+        openid = code2openid(code)
+        print(openid)
+        if not openid:
+            message['status'] = "获取openid失败"
+            return jsonify(message)
+
+        #然后结合realname查询
+
+        #尝试查询是否存在用户
+        try:
+            exist_user = User.query.filter(User.realname==realname).first()
+
+            if exist_user:
+
+                #如果存在,使用update更新用户信息
+                exist_user.xcx_openid_tmp = openid
+
+            else:
+
+                exist_user = User()
+                exist_user.username = openid
+                exist_user.password = "6666"
+                exist_user.department = 20
+                exist_user.email = "xxx@wolfcode.cn"
+                exist_user.realname = realname
+                exist_user.xcx_openid_tmp = openid
+            
+            insert_time = datetime.now().strftime("%m-%d %H:%M")
+            exist_user.quick_verify = insert_time
+
+            db.session.add(exist_user)
+            db.session.commit()
+            db.session.close()
+        
+        except Exception as e:
+            logging.error(e)
+            message['status'] = "数据库操作异常"
+            return jsonify(message)
+
+        message['status'] = "申请成功,请等待管理员审核"
+            
+        return jsonify(message)
 
     
 
+def code2openid(code):
 
+    get_openid_url = "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code"%(Config.app_id,Config.app_secret,code)
+    openid = ''
+    try:
+        res = requests.get(url=get_openid_url,timeout=4)
+        response = res.content.decode()
+        if res.status_code == 200:
+            content = res.content.decode()
+
+            #将内容转换成为字典
+            info = json.loads(content)
+            openid = info['openid']
+            return openid
+
+        else:
+            logging.error(response)
+            return False
+    
+    except Exception:
+        logging.error(response)
+        return False
 
 
 #设计一个直接兼容使用公众号的函数
