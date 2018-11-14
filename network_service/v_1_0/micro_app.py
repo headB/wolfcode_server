@@ -1,7 +1,7 @@
 from . import micro_app_api
 import requests
 from config import Config
-from flask import request,jsonify
+from flask import request,jsonify,make_response,session
 import json
 from network_service.v_1_0.register.models import User
 from manage import db,logging
@@ -47,6 +47,13 @@ def request_verify():
             if exist_openid:
                 message['statusCode'] = '200'
                 message['status'] = "用户名:%s"%(exist_openid.realname)
+
+                #就是这里了,应该需要返回另外的关键数据了.
+
+                #然后这里还可以添加其他的关键返回参数,例如是token值
+                # response = make_response("set cookie")
+                # response.set_cookie("username",exist_openid.realname)
+                session['username'] = exist_openid.realname
             else:
                 #设置回复信息,
                 
@@ -117,7 +124,55 @@ def request_verify():
             
         return jsonify(message)
 
-    
+@micro_app_api.route("/request",methods=['GET','POST'])
+def request_service():
+
+    message = {}
+    message['statusCode'] = '201'
+    message['status'] = "rquest获取信息失败"
+    error_message = jsonify(message)
+
+    if request.method == "POST":
+        session_name = session.get('username')
+        print(session_name)
+        if  session_name:
+
+            request_service = request.get_json()
+            request_type = request_service.get("type")
+
+            if  request_type:
+
+                if request_type == 'wifi':
+
+                    wifi_info_dict = []
+
+                    for x,y in Config.WIFI_PWD.items():
+
+                        wifi_tmp = {}
+                        wifi_tmp['wifiName'] = x
+                        wifi_tmp['passwd'] = y
+                        wifi_info_dict.append(wifi_tmp)
+
+
+
+
+                    message['statusCode'] = '200'
+                    message['status'] = wifi_info_dict
+                
+            
+            return jsonify(message)
+
+        else:
+
+            message['status'] = "你尚未登陆"
+            return jsonify(message)
+
+
+    else:
+
+        return error_message
+
+
 
 def code2openid(code):
 
