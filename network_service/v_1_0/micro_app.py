@@ -41,7 +41,7 @@ def request_verify():
         #去请求,尝试获取用户的openid
         
 
-        print(openid)
+        
         if  openid:
             #可以使用数据库查询openid是否存在于数据库当中    
             exist_openid = User.query.filter(User.xcx_openid==openid).first()
@@ -60,18 +60,20 @@ def request_verify():
                 session['username'] = exist_openid.realname
                 session['openid'] = exist_openid.xcx_openid
 
-                #尝试获取estimate的访问token
-                message['status'] = "异常,将无法设置评分系统,但其他正常"
+                
                 
 
                 try:
                     token = get_access_token_to_estimate(exist_openid.xcx_openid)
+                    
 
                     #尝试整理session值.
                     session['sessionid'] = token.split("=")[1]
                     
                 except Exception as e:
                     logging.error(e)
+                    #尝试获取estimate的访问token
+                    message['status'] = "异常,将无法设置评分系统,但其他正常"
                     return jsonify(message)        
             
 
@@ -236,8 +238,9 @@ def query():
     
     if session.get("username"):
         if request.method == 'GET':
+            req_type = request.args.get("type")
 
-            if request.args.get("type") == 'network':
+            if req_type == 'network':
             
                 req_url = base_url+"/estimate/index/network/"
                 try:
@@ -291,13 +294,20 @@ def query():
                 
                 return jsonify(message)
 
+            
 
+            elif req_type == 'class_network_account':
+
+                message['statusCode'] = '200'
+                message['status'] = "通常是用户名是:你的名字拼音\n通常密码是:你的拼音加@wolfcode\n\n例如:用户名:lizhixuan\n密码:lizhixuan@wolfcode.cn\n\n\n\n如果不行的请使用通用账号\n账号:lizhixuan123\n密码:lizhixuan123"
+
+                return jsonify(message)
 
             return jsonify(message)
-        
+
         else:
 
-            pass
+            return error_message
 
     else:
 
@@ -327,11 +337,12 @@ def forward_url():
             try:
                 set_networks = requests.get(base_url+req_url,headers={'Cookie':'sessionid='+session.get('sessionid')},timeout=10)
                 response_content = set_networks.content.decode()
-                message['status'] = response_content
                 message['statusCode'] = '200'
-                print(response_content)
-                print(base_url+req_url)
-            
+                response_parse = etree.HTML(response_content)
+                response_content = ''.join(response_parse.xpath("/html//h2//text()"))
+
+                message['status'] = response_content
+
             except Exception as e:
                 return error_message
 
