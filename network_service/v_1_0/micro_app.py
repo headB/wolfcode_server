@@ -6,7 +6,11 @@ import json
 from network_service.v_1_0.register.models import User
 from manage import db,logging
 from datetime import datetime
+from .register.register import redirect_after_weixin_checkin,try_get_estimate_token
+from lxml import etree
+import re
 
+base_url = "https://weixin.520langma.com"
 
 @micro_app_api.route("/")
 def index():
@@ -54,6 +58,23 @@ def request_verify():
                 # response = make_response("set cookie")
                 # response.set_cookie("username",exist_openid.realname)
                 session['username'] = exist_openid.realname
+                session['openid'] = exist_openid.xcx_openid
+
+                #尝试获取estimate的访问token
+                message['status'] = "异常,将无法设置评分系统,但其他正常"
+                
+
+                try:
+                    token = get_access_token_to_estimate(exist_openid.xcx_openid)
+
+                    #尝试整理session值.
+                    session['sessionid'] = token.split("=")[1]
+                    
+                except Exception as e:
+                    logging.error(e)
+                    return jsonify(message)        
+            
+
             else:
                 #设置回复信息,
                 
@@ -134,8 +155,10 @@ def request_service():
 
     if request.method == "POST":
         session_name = session.get('username')
-        print(session_name)
+        session_name1 = session.get('openid')
+        
         if  session_name:
+            
 
             request_service = request.get_json()
             request_type = request_service.get("type")
@@ -198,7 +221,145 @@ def code2openid(code):
         return False
 
 
+#单独设置一个函数用于处理通断网问题
+@micro_app_api.route("/query",methods=['GET',"POST"])
+def query():
+
+    #重点,  1必须提供openid或者微信小程序的openid
+    #       2.必须是登陆过的用户,直接提取session里面的openid来操作.
+    # 是啊,一语惊醒梦中人,对啊,可以将token的值保存到临时的session当中的啦.!
+
+    message = {}
+    message['statusCode'] = '201'
+    message['status'] = "query获取信息失败"
+    error_message = jsonify(message)
+    
+    if session.get("username"):
+        if request.method == 'GET':
+
+            if request.args.get("type") == 'network':
+            
+                req_url = base_url+"/estimate/index/network/"
+                try:
+                    
+                    #整体信息
+
+                    all_class_network = []
+
+                    header = {
+                        "Cookie":"sessionid="+session['sessionid']
+                        
+                    }
+                    
+                    html_1 = requests.get(req_url,headers=header,verify=False)
+                    parse_html = etree.HTML(html_1.content.decode())
+                    #print(html_1.content.decode())
+                    x1 = "/html/body/center/table[@id='network']/tbody/tr[position()>1]"
+                    x2 = "td[1]/text()"
+                    x3 = 'td[3]//text()'
+                    x4 = 'td[2]//a/@href'
+
+                    res1 = parse_html.xpath(x1)
+
+                    for x in res1:
+
+                        per_class_status = {}
+
+                        #当前网络状态
+                        per_class_status['status'] = x.xpath(x3)[0]
+                        #课室名字
+                        per_class_status['class_name'] = x.xpath(x2)[0]
+                        #操作链接
+                        per_class_status['operate_link'] = re.findall('\?.+',x.xpath(x4)[0])[0]
+                        #class_id = re.findall("cls=(\d+)",x.xpath(x4)[0])[0]
+                        #print(status,class_name,operate_link)
+                        all_class_network.append(per_class_status)
+
+
+                except Exception as e:
+
+                    message['status'] = "获取课室网络信息失败"
+                    logging.error(e)
+                    
+                    return jsonify(message)
+
+
+                message['statusCode'] = '200'
+                message['status'] = 'ok'
+                message['all_class_info'] = all_class_network
+                message['forwardUrl'] = "/estimate/index/set_network/"
+                
+                return jsonify(message)
+
+
+
+            return jsonify(message)
+        
+        else:
+
+            pass
+
+    else:
+
+        message['status'] = "你尚未登陆"
+        return jsonify(message)
+
+
+
+#设置一个通用的url跳转功能
+
+@micro_app_api.route("/forward_url/",methods=['GET'])
+def forward_url():
+
+
+    message = {}
+    message['statusCode'] = '201'
+    message['status'] = "跳转获取信息失败"
+    error_message = jsonify(message)
+
+
+    if request.method == "GET" and session.get("username"):
+        req_url = request.args.get("url")
+        
+        
+        if req_url:   
+            
+            try:
+                set_networks = requests.get(base_url+req_url,headers={'Cookie':'sessionid='+session.get('sessionid')},timeout=10)
+                response_content = set_networks.content.decode()
+                message['status'] = response_content
+                message['statusCode'] = '200'
+                print(response_content)
+                print(base_url+req_url)
+            
+            except Exception as e:
+                return error_message
+
+            return jsonify(message)
+
+
+    return error_message
+
+
+
+
 #设计一个直接兼容使用公众号的函数
+
+#尝试用每个人的openid去estimate获取访问的access_token并且保存到session当中.
+
+def get_access_token_to_estimate(openid):
+
+#尝试利用函数,绕过验证码登陆
+    try:
+        token = try_get_estimate_token(session.get('openid'))
+    
+    except Exception as e:
+        logging.error(e)
+
+
+        return False
+
+    return token
 
 
 #模拟用户使用公众号来请求url
@@ -212,6 +373,6 @@ def common_xml_content(openid,req_content):
         "header":"text/xml"
     }
 
-    request = requests.post("http://127.0.0.1/",headers=headers,data=content)
+    request = requests.post("https://kumanxuan1.f33322.net/",headers=headers,data=content,verify=False)
 
     return request
