@@ -235,6 +235,8 @@ def query():
     message['statusCode'] = '201'
     message['status'] = "query获取信息失败"
     error_message = jsonify(message)
+
+    header = {"Cookie":"sessionid="+session['sessionid'],'accept':'application/json'}
     
     if session.get("username"):
         if request.method == 'GET':
@@ -243,42 +245,9 @@ def query():
             if req_type == 'network':
             
                 req_url = base_url+"/estimate/index/network/"
-                try:
-                    
-                    #整体信息
-
-                    all_class_network = []
-
-                    header = {
-                        "Cookie":"sessionid="+session['sessionid']
-                        
-                    }
+                try:                  
                     
                     html_1 = requests.get(req_url,headers=header,verify=False)
-                    parse_html = etree.HTML(html_1.content.decode())
-                    #print(html_1.content.decode())
-                    x1 = "/html/body/center/table[@id='network']/tbody/tr[position()>1]"
-                    x2 = "td[1]/text()"
-                    x3 = 'td[3]//text()'
-                    x4 = 'td[2]//a/@href'
-
-                    res1 = parse_html.xpath(x1)
-
-                    for x in res1:
-
-                        per_class_status = {}
-
-                        #当前网络状态
-                        per_class_status['status'] = x.xpath(x3)[0]
-                        #课室名字
-                        per_class_status['class_name'] = x.xpath(x2)[0]
-                        #操作链接
-                        per_class_status['operate_link'] = re.findall('\?.+',x.xpath(x4)[0])[0]
-                        #class_id = re.findall("cls=(\d+)",x.xpath(x4)[0])[0]
-                        #print(status,class_name,operate_link)
-                        all_class_network.append(per_class_status)
-
-
                 except Exception as e:
 
                     message['status'] = "获取课室网络信息失败"
@@ -289,7 +258,7 @@ def query():
 
                 message['statusCode'] = '200'
                 message['status'] = 'ok'
-                message['all_class_info'] = all_class_network
+                message['all_class_info'] = json.loads(html_1.content.decode())
                 message['forwardUrl'] = "/estimate/index/set_network/"
                 
                 return jsonify(message)
@@ -301,6 +270,47 @@ def query():
                 message['statusCode'] = '200'
                 message['status'] = "通常是用户名是:你的名字拼音\n通常密码是:你的拼音加@wolfcode\n\n例如:用户名:lizhixuan\n密码:lizhixuan@wolfcode.cn\n\n\n\n如果不行的请使用通用账号\n账号:lizhixuan123\n密码:lizhixuan123"
 
+                return jsonify(message)
+
+            elif req_type == 'estimate_info':
+
+                port = request.args.get('port')
+
+                try:
+                    response = requests.get(url=base_url+"/estimate/index/export/?port=%s"%port,headers=header,verify=False)
+                    
+                    response_content = json.loads(response.content.decode())
+
+                    response_content['status'] = '请求成功'
+                    response_content['statusCode'] = '200'
+
+                    return jsonify(response_content)
+
+                except Exception as e:
+
+                    logging.error(e)
+
+                    return error_message
+
+            elif req_type == 'show_detail':
+
+                req_url = request.args.get("url")
+
+                url = base_url+"/estimate/index/export_txt/"+req_url
+
+                response = requests.get(url=url,headers=header)
+                
+                response_decode = response.content.decode()
+
+                parse_content = etree.HTML(response_decode)
+
+                content = ''.join(parse_content.xpath("/html//div//text()"))
+
+                message['status'] = "请求成功"
+                message['statusCode'] = '200'
+                message['content'] = content
+                
+                
                 return jsonify(message)
 
             return jsonify(message)
@@ -329,13 +339,14 @@ def forward_url():
 
 
     if request.method == "GET" and session.get("username"):
+        headers_info = {'Cookie':'sessionid='+session.get('sessionid')}
         req_url = request.args.get("url")
         
         
         if req_url:   
             
             try:
-                set_networks = requests.get(base_url+req_url,headers={'Cookie':'sessionid='+session.get('sessionid')},timeout=10)
+                set_networks = requests.get(base_url+req_url,headers=headers_info,timeout=10)
                 response_content = set_networks.content.decode()
                 message['statusCode'] = '200'
                 response_parse = etree.HTML(response_content)
@@ -348,6 +359,7 @@ def forward_url():
 
             return jsonify(message)
 
+        
 
     return error_message
 
