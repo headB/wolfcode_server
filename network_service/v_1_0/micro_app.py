@@ -304,13 +304,13 @@ def query():
 
                 parse_content = etree.HTML(response_decode)
 
-                content = (''.join(parse_content.xpath("/html//div//text()"))).strip()
+                content = (''.join(parse_content.xpath("/html//div//text()"))).strip().replace("\n",'').replace('/r','')
 
 
                 message['status'] = "请求成功"
                 message['statusCode'] = '200'
                 message['content'] = content
-                
+                print(content)
                 
                 return jsonify(message)
 
