@@ -304,7 +304,8 @@ def query():
 
                 parse_content = etree.HTML(response_decode)
 
-                content = ''.join(parse_content.xpath("/html//div//text()"))
+                content = (''.join(parse_content.xpath("/html//div//text()"))).strip()
+
 
                 message['status'] = "请求成功"
                 message['statusCode'] = '200'
