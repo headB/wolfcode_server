@@ -9,6 +9,11 @@ from datetime import datetime
 from .register.register import redirect_after_weixin_checkin,try_get_estimate_token
 from lxml import etree
 import re
+from sqlalchemy import or_
+import random
+from flask_mail import Message
+from manage import mail
+
 
 base_url = "https://weixin.520langma.com"
 
@@ -367,6 +372,161 @@ def forward_url():
 
 
 
+@micro_app_api.route("/verify_code/",methods=['GET','POST'])
+def verify_code():
+
+    message = {}
+    message['statusCode'] = '201'
+    message['status'] = "验证码阶段出错"
+    error_message = jsonify(message)
+
+    #首先获取合法的openid
+
+    #尝试获取openid,如果失败,就报错
+    try:
+        openid_get = request.args.get("code")
+        openid = code2openid(openid_get)
+        email = request.args.get("email") if ( request.args.get("email")) else request.get_json().get("email")
+       
+        
+        if not openid_get or  not openid or not email:
+            raise ValueError("错误,参数")
+    except Exception as e:
+        logging.error(e)
+        return error_message
+
+    if not re.findall("@wolfcode.cn",email):
+        message['status'] = "邮箱的格式必须是你的名字拼音加@wolfcode.cn"
+        return jsonify(message)
+
+        
+
+    if request.method == 'GET':
+        #如果是get请求的话, 就准备生成验证码,放到数据库
+
+        #然后,想想用户的习惯,肯定是乱点乱按的,所以考虑到这一点,要多做一个步骤.
+
+        #查询具体openid有没有存在于数据库当中
+        exist_openid = User.query.filter(or_(User.xcx_openid==openid,User.xcx_openid_tmp==openid)).first()
+        
+        print(exist_openid)
+        
+        if not exist_openid:
+
+            exist_user = User()
+            exist_user.username = openid
+            exist_user.password = "6666"
+            exist_user.department = 20
+            exist_user.email = email
+            exist_user.realname = "wolfcode"
+            exist_user.xcx_openid_tmp = openid
+
+            #如何判断时间呢?好像出了使用redis,好像真的没有其他好的方式了.一个有效期.
+            #现在只能简单点了,直接只能判断设置一次验证码吧.简单点,不用添加太多的流程.
+
+            #然后生成随机数
+            verify_code = "".join([ str(random.randint(0,9)) for x in range(4)])
+
+            exist_user.quick_verify = verify_code
+            print(verify_code)
+
+            try:
+                
+                message1 = Message("叩丁狼小程序-认证",sender='lizhixuan@wolfcode.cn',recipients=[email,])
+                message1.html = "你的验证码是:%s"%verify_code
+                mail.send(message1)
+
+                db.session.add(exist_user)
+                db.session.commit()
+                db.session.close()
+                message['statusCode'] = '200'
+                message['status'] = "发送成功!请去邮箱查看验证码"
+            
+            except Exception as e:
+                
+                logging.error(e)
+                logging.error("01")
+                message['statusCode'] = '201'
+                message['status'] = "发送失败,请检查-01"
+
+            
+
+        else:
+
+            print(exist_openid.quick_verify)
+
+            if not exist_openid.quick_verify:
+
+                try:
+                    
+                    verify_code = "".join([ str(random.randint(0,9)) for x in range(4)])
+                    exist_openid.quick_verify = verify_code
+                    db.session.add(exist_openid)
+                    db.session.commit()
+                    db.session.close()
+
+                    
+                    message1 = Message("叩丁狼认证",sender='lizhixuan@wolfcode.cn',recipients=[email,])
+                    message1.html("你的验证码是:%s"%verify_code)
+                    mail.sned(message1)
+
+                    message['statusCode'] = '200'
+                    message['status'] = "已经发送验证码到你的邮箱"
+                
+                except Exception as e:
+                    logging.error(e)
+                    return error_message
+
+            else:
+
+                message['status'] = "请检查你的邮箱,或者存在本次请求的验证码"
+                return jsonify(message)
+
+        db.session.close()
+        return jsonify(message)
+
+
+
+    elif request.method == 'POST':
+
+        verify_code = request.get_json().get("verifyCode")
+
+
+
+        if not verify_code:
+
+            message['status'] = "缺少验证码"
+            return jsonify(message)
+        
+        try:
+
+            #首先查询用户是否存在先.
+            exist_user = User.query.filter(User.xcx_openid_tmp==openid,User.email==email,User.quick_verify==verify_code).first()
+            
+            if exist_user:
+
+                exist_user.xcx_openid = exist_user.xcx_openid_tmp
+                exist_user.xcx_openid_tmp = None
+                db.session.add(exist_user)
+                db.session.commit()
+                db.session.close()
+
+                message['statusCode'] = '200'
+                message['status'] = "注册成功,请下拉刷新数据!"
+            
+            else:
+                
+                
+                message['status'] = "注册失败!\t可能原因一:你还没有发送验证码到你的邮箱\t原因二:可能你的邮箱地址和openid不对性\t原因三:你的验证码不正确,请检查"
+        
+        except Exception as e:
+            logging.error(e)
+            return error_message
+
+        return jsonify(message)
+
+    else:
+        return error_message
 
 #设计一个直接兼容使用公众号的函数
 
