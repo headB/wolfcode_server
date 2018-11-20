@@ -395,7 +395,7 @@ def verify_code():
         logging.error(e)
         return error_message
 
-    if not re.findall("@wolfcode.cn",email):
+    if not re.findall("(@wolfcode.cn|520it.com)",email):
         message['status'] = "邮箱的格式必须是你的名字拼音加@wolfcode.cn"
         return jsonify(message)
 
