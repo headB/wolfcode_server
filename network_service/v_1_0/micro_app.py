@@ -461,6 +461,7 @@ def verify_code():
                     
                     verify_code = "".join([ str(random.randint(0,9)) for x in range(4)])
                     exist_openid.quick_verify = verify_code
+                    exist_openid.xcx_openid_tmp = openid
                     db.session.add(exist_openid)
                     db.session.commit()
                     db.session.close()
