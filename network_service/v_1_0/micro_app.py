@@ -13,6 +13,7 @@ from sqlalchemy import or_
 import random
 from flask_mail import Message
 from manage import mail
+import traceback
 
 
 base_url = "https://weixin.520langma.com"
@@ -460,20 +461,24 @@ def verify_code():
                     
                     verify_code = "".join([ str(random.randint(0,9)) for x in range(4)])
                     exist_openid.quick_verify = verify_code
-                    db.session.add(exist_openid)
-                    db.session.commit()
+                    # db.session.add(exist_openid)
+                    # db.session.commit()
                     db.session.close()
 
                     
                     message1 = Message("叩丁狼认证",sender='lizhixuan@wolfcode.cn',recipients=[email,])
-                    message1.html("你的验证码是:%s"%verify_code)
+                    message1.html = "你的验证码是:%s"%verify_code
                     mail.sned(message1)
 
                     message['statusCode'] = '200'
                     message['status'] = "已经发送验证码到你的邮箱"
+
+                    
                 
                 except Exception as e:
-                    logging.error(e)
+                    logging.error(repr(e))
+                    # logging.error(traceback.format_exc())
+                    logging.error("在给已存在的用户发送验证码失败,-01")
                     return error_message
 
             else:
