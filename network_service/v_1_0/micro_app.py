@@ -409,7 +409,6 @@ def verify_code():
         #查询具体openid有没有存在于数据库当中
         exist_openid = User.query.filter(or_(User.xcx_openid==openid,User.xcx_openid_tmp==openid)).first()
         
-        print(exist_openid)
         
         if not exist_openid:
 
