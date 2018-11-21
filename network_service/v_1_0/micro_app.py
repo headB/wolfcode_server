@@ -407,7 +407,7 @@ def verify_code():
         #然后,想想用户的习惯,肯定是乱点乱按的,所以考虑到这一点,要多做一个步骤.
 
         #查询具体openid有没有存在于数据库当中
-        exist_openid = User.query.filter(or_(User.xcx_openid==openid,User.xcx_openid_tmp==openid)).first()
+        exist_openid = User.query.filter(or_(User.email==email,User.xcx_openid==openid,User.xcx_openid_tmp==openid)).first()
         
         
         if not exist_openid:
