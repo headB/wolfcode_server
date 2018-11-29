@@ -274,7 +274,7 @@ def query():
             elif req_type == 'class_network_account':
 
                 message['statusCode'] = '200'
-                message['status'] = "通常是用户名是:你的名字拼音\n通常密码是:你的拼音加@wolfcode\n\n例如:用户名:lizhixuan\n密码:lizhixuan@wolfcode.cn\n\n\n\n如果不行的请使用通用账号\n账号:lizhixuan123\n密码:pc9527168"
+                message['status'] = "通常是用户名是:你的名字拼音\n通常密码是:你的拼音加@wolfcode\n\n例如:用户名:lizhixuan\n密码:lizhixuan@wolfcode\n\n\n\n如果不行的请使用通用账号\n账号:lizhixuan123\n密码:pc9527168"
 
                 return jsonify(message)
 
