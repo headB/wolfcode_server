@@ -12,6 +12,7 @@ from flask_mail import Message
 from network_service.v_1_0.register.models import User,ClassRoom
 import requests
 from sqlalchemy import or_
+import json
 
 #本微信公众号的号码
 host_weixin_openid = 'gh_8e01c367f25d'
@@ -19,6 +20,18 @@ host_weixin_openid = 'gh_8e01c367f25d'
 #验证码,现在要出动itsdangous了
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
+
+#设置一个函数,去获取access_token,利用的是appid+secret
+def get_access_token(Config):
+
+    try:
+        req_url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s"%(Config.app_id,Config.app_secret)
+        token_response = requests.get(req_url).content.decode()
+        token_dict = json.loads(token_response)
+        return token_dict['access_token']
+    except Exception as e:
+        logging.error(e)
+        logging.error("获取access_token失败!")
 
 #设置一个消息封装
 
@@ -511,3 +524,64 @@ def redirect_after_weixin_checkin(weixin_openid,request_url):
         pass
 
     return {"success":True,'msg':res1}
+
+
+
+#设置菜单
+menu_info = """
+{
+"button":
+        [
+            {
+                "type": "view",
+                "name": "开发指引",
+                "url":"https://weixin.520langma.com/estimate"
+            },
+            {
+                "name": "公众平台",
+                "sub_button":
+                [
+                    {
+                        "type": "view",
+                        "name": "更新公告",
+                        "url": "http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1418702138&token=&lang=zh_CN"
+                    },
+                    {
+                        "type": "view",
+                        "name": "接口权限说明",
+                        "url": "http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1418702138&token=&lang=zh_CN"
+                    },
+                    {
+                        "type": "view",
+                        "name": "返回码说明",
+                        "url": "http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1433747234&token=&lang=zh_CN"
+                    }
+                ]
+            }
+          ]
+}
+"""
+
+#创建菜单
+def create_menu(accessToken,menu_info):
+    post_url = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token=%s" %accessToken
+
+    #删除菜单用下面这条
+    # post_url = "https://api.weixin.qq.com/cgi-bin/menu/delete?access_token=%s" %accessToken
+
+    # post_data = json.dumps(menu_info)
+    try:
+        res = requests.post(post_url,menu_info.encode()).content.decode()
+
+        #删除菜单用这条
+        # res = requests.get(post_url).content.decode()
+        print(res)
+    except Exception as e:
+        logging.error(e)
+        logging.error("创建菜单失败")
+        print(e)
+
+
+#一旦程序运行起来,就直接创建菜单
+# token = get_access_token(Config)
+# create_menu(token,menu_info)
