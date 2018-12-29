@@ -42,7 +42,7 @@ manager = Manager(app)
 
 
 #设置日志
-logging.basicConfig(level=logging.ERROR,filename="log_debug.log",format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.ERROR,filename=' - %(funcName)s -  %(lineno)d - %(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 if __name__ == "__main__":
     
