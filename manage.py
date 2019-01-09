@@ -6,6 +6,7 @@ import config
 #导入创建实例化数据库用的SQLAlchemy
 from flask_sqlalchemy import SQLAlchemy
 import logging
+from flask_cache import Cache
 
 #还是需要导入那个什么脚本助手了,导入Manager
 
@@ -15,6 +16,8 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_POOL_SIZE'] = 10
 app.config['SQLALCHEMY_POOL_RECYCLE'] = 280
 
+cache = Cache(app,config={'CACHE_TYPE': 'simple'})
+cache.init_app(app)
 
 
 bootstrap = Bootstrap(app)
@@ -42,7 +45,8 @@ manager = Manager(app)
 
 
 #设置日志
-logging.basicConfig(level=logging.ERROR,filename="log_debug.log",format=' - %(funcName)s -  %(lineno)d - %(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# logging.basicConfig(level=logging.ERROR,filename="log_debug.log",format=' - %(funcName)s -  %(lineno)d - %(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# logging.basicConfig(level=logging.DEBUG,format=' - %(funcName)s -  %(lineno)d - %(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 if __name__ == "__main__":
     

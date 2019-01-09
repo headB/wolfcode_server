@@ -13,6 +13,8 @@ from network_service.v_1_0.register.models import User,ClassRoom
 import requests
 from sqlalchemy import or_
 import json
+from hashlib import sha1
+from manage import cache
 
 #本微信公众号的号码
 host_weixin_openid = 'gh_8e01c367f25d'
@@ -32,6 +34,21 @@ def get_access_token(Config):
     except Exception as e:
         logging.error(e)
         logging.error("获取access_token失败!")
+
+#设计一个获取2个小时有效的jsapi-ticket,主要用于微信的jssdk接口临时使用的.!
+@cache.cached(timeout=7000,key_prefix='random_ticket')
+def get_js_api_ticket(Config):
+
+    access_token = get_access_token(Config)
+    url = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=%s&type=jsapi"%access_token
+    try:
+        response = json.loads(requests.get(url).content.decode())
+        return response['ticket']
+    except Exception as e:
+        logging.error("获取临时ticket失败!")
+        return None
+
+
 
 #设置一个消息封装
 
@@ -413,6 +430,22 @@ def decode_verify_code():
     #然后，现在就进行数据库操作了。！没有错，就是跨数据库工作，虽然也是estimate数据库。
 
 
+#2019-1-8添加新功能
+@register_api.route("/test")
+def test():
+
+    jsapi_ticket = get_js_api_ticket(Config)
+    print(jsapi_ticket)
+    app_id=Config.app_id
+    timestamp='1546956170'
+    nonce_str='kumanxuan'
+    url="https://weixin.520langma.com%s"%request.path
+    signature_values="jsapi_ticket=%s&noncestr=%s&timestamp=%s&url=%s"%(jsapi_ticket,nonce_str,timestamp,url)
+    signature = sha1(signature_values.encode()).hexdigest()
+
+    return render_template('test.html',signature=signature,app_id=app_id,timestamp=timestamp,nonce_str=nonce_str)
+
+
 def send_verify_code(weixin_opnid,email):
 
     #尝试获取open_id
@@ -585,3 +618,19 @@ def create_menu(accessToken,menu_info):
 #一旦程序运行起来,就直接创建菜单
 # token = get_access_token(Config)
 # create_menu(token,menu_info)
+
+#尝试获取临时ticket
+
+# @cache.cached(timeout=7200,key_prefix='random_number')
+# js_ticket = get_js_api_ticket(Config)
+
+# print(js_ticket)
+
+js_ticket = "HoagFKDcsGMVCIY2vOjf9qYjGFsZIFamI2zJz7boHiwuTzhnS62wv3PqgbbrXhwvX2EFfNS_rq-x9XdrvSYO0w"
+
+# jsapi_ticket=HoagFKDcsGMVCIY2vOjf9qYjGFsZIFamI2zJz7boHiwuTzhnS62wv3PqgbbrXhwvX2EFfNS_rq-x9XdrvSYO0w&noncestr=kumanxuan&timestamp=1546956170&url=https://weixin.520langma.com/test
+
+# jsapi_ticket=HoagFKDcsGMVCIY2vOjf9qYjGFsZIFamI2zJz7boHiwuTzhnS62wv3PqgbbrXhwvX2EFfNS_rq-x9XdrvSYO0w&noncestr=kumanxuan&timestamp=1546956170&url=https://weixin.520langma.com/test
+
+
+
