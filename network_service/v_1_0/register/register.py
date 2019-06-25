@@ -28,7 +28,7 @@ def get_access_token(Config):
 
     try:
         req_url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s"%(Config.app_id,Config.app_secret)
-        token_response = requests.get(req_url).content.decode()
+        token_response = requests.get(req_url,timeout=4).content.decode()
         token_dict = json.loads(token_response)
         return token_dict['access_token']
     except Exception as e:
@@ -42,7 +42,7 @@ def get_js_api_ticket(Config):
     access_token = get_access_token(Config)
     url = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=%s&type=jsapi"%access_token
     try:
-        response = json.loads(requests.get(url).content.decode())
+        response = json.loads(requests.get(url,timeout=4).content.decode())
         return response['ticket']
     except Exception as e:
         logging.error("获取临时ticket失败!")
@@ -508,7 +508,7 @@ def try_get_estimate_token(weixin_openid):
     token = token_create({'open_id':weixin_openid},21600)
 
     checkin_url = "https://weixin.520langma.com/estimate/login/weixin_checkin/?code=%s"%token
-    res1 = requests.get(checkin_url,verify=False)
+    res1 = requests.get(checkin_url,verify=False,timeout=5)
     content = res1.content.decode()
     #然后根据内容，查看是否成功登陆
     #随便找一个特征，去认定是否登陆成功
@@ -604,7 +604,7 @@ def create_menu(accessToken,menu_info):
 
     # post_data = json.dumps(menu_info)
     try:
-        res = requests.post(post_url,menu_info.encode()).content.decode()
+        res = requests.post(post_url,menu_info.encode(),timeout=5).content.decode()
 
         #删除菜单用这条
         # res = requests.get(post_url).content.decode()

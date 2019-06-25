@@ -30,6 +30,7 @@ def index():
 
 @micro_app_api.route("/verify",methods=['GET','POST'])
 def request_verify():
+    db.session.close()
     message = {}
     message['statusCode'] = '201'
     message['status'] = "初始状态,不带数据"
@@ -65,9 +66,7 @@ def request_verify():
                 # response.set_cookie("username",exist_openid.realname)
                 session['username'] = exist_openid.realname
                 session['openid'] = exist_openid.xcx_openid
-
-                
-                
+                session['uid'] = exist_openid.id
 
                 try:
                     token = get_access_token_to_estimate(exist_openid.xcx_openid)
