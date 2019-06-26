@@ -365,7 +365,7 @@ def check_activity_passed(act_now):
 
     for x in act_passed:
 
-        if(request.method=="PUT" and act_now.end_date <= x.start_date or act_now.start_date >= x.end_date):
+        if(act_now.end_date <= x.start_date or act_now.start_date >= x.end_date):
 
             pass
         else:
