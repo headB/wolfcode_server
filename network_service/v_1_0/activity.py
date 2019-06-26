@@ -30,6 +30,10 @@ def set_activity():
         message['status'] = "activity设置失败!"
         error_message = jsonify(message)
 
+        if(not check_user_login_status()):
+            return jsonify(message)
+
+
         setting_info = {}
         setting_info['topic'] =  json_data.get('topic')
         setting_info['name'] =  json_data.get('name')
@@ -159,7 +163,13 @@ def review():
     message['code'] = 201
     message['content'] = ''
 
+
+
     message_json = jsonify(message)
+
+    if(not check_user_login_status()):
+        return jsonify(message)
+
 
 
     if(request.method=="GET"):
@@ -285,14 +295,26 @@ def set_activitys():
 
     message = {}
     
+    #尽量开头和结束都设置一下db.session.close
+    db.session.close()
+    
     message['statusCode'] = 201
     message['status'] = "activitys获取失败"
     message['content'] = ''
 
+    if(not check_user_login_status()):
+        return jsonify(message)
+
+
     now_time = datetime.datetime.now()
+    id = request.args.get('id')
+
+    if(id==1 or id=="1"):
+        
+        activity_review = Activity.query.filter(Activity.crm_username==session.get("username"),Activity.end_date>=now_time,Activity.passed==1).all()
+    else:
     
-    
-    activity_review = Activity.query.filter(Activity.end_date>=now_time,Activity.passed==1).all()
+        activity_review = Activity.query.filter(Activity.end_date>=now_time,Activity.passed==1).all()
 
 
     content = []
@@ -355,3 +377,12 @@ def check_activity_passed(act_now):
 
     
     return message
+
+
+def check_user_login_status():
+
+    if(session.get("username")):
+
+        return True
+    else:
+        return False
