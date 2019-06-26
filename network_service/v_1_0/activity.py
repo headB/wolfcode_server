@@ -122,7 +122,19 @@ def set_activity():
                 topic_history.start_date,topic.start_date = setting_info['startDate'],setting_info['startDate']
                 topic_history.end_date,topic.end_date = setting_info['endDate'],setting_info['endDate']
 
-                mes1 = check_activity_passed(topic)
+                class object1:
+
+                    pass
+
+                o1 =  object1()
+
+                o1.start_date = setting_info['startDate']
+                o1.end_date = setting_info['endDate']
+
+                print(o1.start_date)
+                print(o1.end_date)
+
+                mes1 = check_activity_passed(o1)
 
                 if(mes1['code']==500):
                     return jsonify(mes1)
@@ -339,9 +351,9 @@ def set_activitys():
 def update_activity():
 
         now_time = datetime.datetime.now()
-                
+        print(now_time)
         all_act_rec = Activity.query.filter(Activity.end_date<now_time).all()
-        
+        print(all_act_rec)
         for x in all_act_rec:
 
             if(now_time > x.end_date):
@@ -365,16 +377,19 @@ def check_activity_passed(act_now):
 
     for x in act_passed:
 
+
         if(act_now.end_date <= x.start_date or act_now.start_date >= x.end_date):
 
-            pass
+           pass
         else:
             
-            message = {}
+            
             message['content'] = ''
             message['status'] = "有活动时间冲突"
             message['code'] = 500
-
+           
+            break
+    
     
     return message
 
