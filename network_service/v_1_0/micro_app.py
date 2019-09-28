@@ -353,7 +353,7 @@ def forward_url():
         if req_url:   
             
             try:
-                set_networks = requests.get(base_url+req_url,headers=headers_info,timeout=10)
+                set_networks = requests.get(base_url+req_url,headers=headers_info,timeout=10,verify=False)
                 response_content = set_networks.content.decode()
                 message['statusCode'] = '200'
                 response_parse = etree.HTML(response_content)
