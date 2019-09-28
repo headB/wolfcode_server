@@ -362,6 +362,7 @@ def forward_url():
                 message['status'] = response_content
 
             except Exception as e:
+                logging.error(e)
                 return error_message
 
             return jsonify(message)
