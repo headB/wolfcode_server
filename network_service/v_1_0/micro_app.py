@@ -46,7 +46,8 @@ def request_verify():
 
         if openid:
             # 可以使用数据库查询openid是否存在于数据库当中
-            exist_openid = User.query.filter(User.xcx_openid == openid).first()
+            # exist_openid = User.query.filter(User.xcx_openid == openid).first()
+            exist_openid = User.query.filter(User.xcx_openid == "o_wpd5eqWy6VicAGDRlAGsDMT0T4").first()
 
             if exist_openid:
                 message['statusCode'] = '200'
