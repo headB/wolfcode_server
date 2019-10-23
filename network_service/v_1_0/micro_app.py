@@ -46,8 +46,8 @@ def request_verify():
 
         if openid:
             # 可以使用数据库查询openid是否存在于数据库当中
-            # exist_openid = User.query.filter(User.xcx_openid == openid).first()
-            exist_openid = User.query.filter(User.xcx_openid == "o_wpd5eqWy6VicAGDRlAGsDMT0T4").first()
+            exist_openid = User.query.filter(User.xcx_openid == openid).first()
+
 
             if exist_openid:
                 message['statusCode'] = '200'
@@ -476,11 +476,11 @@ def verify_code():
             # 首先查询用户是否存在先.
             # 为了应付验证,先假想验证码统一都是6666.
 
-            # exist_user = User.query.filter(User.xcx_openid_tmp==openid,User.email==email,User.quick_verify==verify_code).first()
-            exist_user = User.query.filter(User.xcx_openid_tmp == openid, User.email == email).first()
+            exist_user = User.query.filter(User.xcx_openid_tmp==openid,User.email==email,User.quick_verify==verify_code).first()
+            # exist_user = User.query.filter(User.xcx_openid_tmp == openid, User.email == email).first()
 
-            # if exist_user:
-            if exist_user and verify_code == "6666":
+            if exist_user:
+            # if exist_user and verify_code == "6666":
 
                 exist_user.xcx_openid = exist_user.xcx_openid_tmp
                 exist_user.xcx_openid_tmp = None
