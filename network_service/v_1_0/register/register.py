@@ -448,11 +448,11 @@ def test():
 
 def send_verify_code(weixin_opnid,email):
 
-    #尝试获取open_id
+    # 尝试获取open_id
     
-    #初始化一个对象先
+    # 初始化一个对象先
 
-    #把微信的id,添加到加密的token当中.
+    # 把微信的id,添加到加密的token当中.
 
     
 
@@ -460,11 +460,11 @@ def send_verify_code(weixin_opnid,email):
 
     token = token_create(token_info,300)
     
-    msg = Message("叩丁狼-微信办公-实名登记",sender='lizhixuan@wolfcode.cn',recipients=[email,])
+    msg = Message("叩丁狼-微信办公-实名登记", sender='lizhixuan@wolfcode.cn', recipients=[email, ])
 
     msg.body = "hello world!"
 
-    #编辑好一个用于激活邮箱地址的加密token
+    # 编辑好一个用于激活邮箱地址的加密token
 
     activate_link = "<a href='https://kumanxuan1.f3322.net/estimate/login/send_weixin_mail/?token=%s'>点我实名认证</a>"%token
 
