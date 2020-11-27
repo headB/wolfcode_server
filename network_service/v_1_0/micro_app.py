@@ -15,7 +15,7 @@ from flask_mail import Message
 from manage import mail
 import traceback
 
-base_url = "https://weixin.520langma.com"
+base_url = "http://192.168.113.1"
 
 
 @micro_app_api.route("/")

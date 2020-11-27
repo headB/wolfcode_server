@@ -127,7 +127,7 @@ def index():
                 #获取具体课室的id
                     class_id = exist_class.id
                     #然后调动url了
-                    set_network_url = "https://weixin.520langma.com/estimate/index/set_network/?cls=%s&operate=%s&acl=520su1314"%(class_id,operate)
+                    set_network_url = "http://192.168.113.1/estimate/index/set_network/?cls=%s&operate=%s&acl=520su1314"%(class_id,operate)
 
                     #然后尝试去请求了
                     res = redirect_after_weixin_checkin(weixin_openid,set_network_url)
@@ -439,7 +439,7 @@ def test():
     app_id=Config.app_id
     timestamp='1546956170'
     nonce_str='kumanxuan'
-    url="https://weixin.520langma.com%s"%request.path
+    url="http://192.168.113.1%s"%request.path
     signature_values="jsapi_ticket=%s&noncestr=%s&timestamp=%s&url=%s"%(jsapi_ticket,nonce_str,timestamp,url)
     signature = sha1(signature_values.encode()).hexdigest()
 
@@ -507,7 +507,7 @@ def try_get_estimate_token(weixin_openid):
 
     token = token_create({'open_id':weixin_openid},21600)
 
-    checkin_url = "https://weixin.520langma.com/estimate/login/weixin_checkin/?code=%s"%token
+    checkin_url = "http://192.168.113.1/estimate/login/weixin_checkin/?code=%s"%token
     res1 = requests.get(checkin_url,verify=False,timeout=5)
     content = res1.content.decode()
     #然后根据内容，查看是否成功登陆
@@ -568,7 +568,7 @@ menu_info = """
             {
                 "type": "view",
                 "name": "开发指引",
-                "url":"https://weixin.520langma.com/estimate"
+                "url":"http://192.168.113.1/estimate"
             },
             {
                 "name": "公众平台",
